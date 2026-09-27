@@ -32,6 +32,7 @@
   var MODES = [["type", "By type"], ["same", "Same"], ["different", "Different"]];
   var DEFAULT_LOOK = {
     mode: "type",
+    legend: "show", // the colour key under the title, shown with "By type" colours
     mist: { bg: "#f3f4f6", tile: "#ffffff", accent: "#16181d", palette: ["#4f6bdc", "#1f9d8a", "#d98a1c", "#d9487a", "#5b6472"] },
     prism: { bg: "#fbf7f0", pattern: "a", palette: ["#ff7a59", "#4361ee", "#06d6a0", "#f72585", "#ffd166"] },
     brutal: { bg: "#e6e2ff", accent: "#ff5fa2", palette: ["#4f6bff", "#a9c7ff", "#c9bcff", "#7b4dff", "#ffffff"] },
@@ -264,7 +265,7 @@
     var used = {};
     tiles().forEach(function (t) { used[t.dataset.cat] = true; });
     var pal = look[currentSkin()].palette;
-    legend.hidden = look.mode !== "type";
+    legend.hidden = look.mode !== "type" || look.legend === "hide";
     legend.innerHTML = CATS.map(function (c, i) {
       return used[c.id] ? '<li><i style="background:' + esc(pal[i % pal.length]) + '"></i>' + esc(c.label) + "</li>" : "";
     }).join("");
@@ -281,7 +282,10 @@
   var look = normalizeLook(load(KEY.look, {}));
   function normalizeLook(saved) {
     saved = saved || {};
-    var out = { mode: MODES.some(function (m) { return m[0] === saved.mode; }) ? saved.mode : DEFAULT_LOOK.mode };
+    var out = {
+      mode: MODES.some(function (m) { return m[0] === saved.mode; }) ? saved.mode : DEFAULT_LOOK.mode,
+      legend: saved.legend === "hide" ? "hide" : "show"
+    };
     SKINS.forEach(function (s) {
       var d = DEFAULT_LOOK[s.id], v = saved[s.id] || {};
       var o = Object.assign({}, d, v);
@@ -358,6 +362,7 @@
       }).join("") + "</div></div>";
 
     html += seg("mode", "Project colours", MODES, look.mode);
+    if (look.mode === "type") html += seg("legend", "Colour key", [["show", "Show"], ["hide", "Hide"]], look.legend);
     if (L.pattern) html += patterns(L.pattern);
     var names = look.mode === "type" ? CATS.map(function (c) { return c.label; })
       : look.mode === "same" ? ["Colour", "Second colour"]
@@ -394,11 +399,12 @@
     if (b.dataset.skinChoice) { setSkin(b.dataset.skinChoice, true); focusSame("[data-skin-choice='" + b.dataset.skinChoice + "']"); return; }
     if (b.dataset.pattern) { look[skin].pattern = b.dataset.pattern; }
     else if (b.dataset.mode) { look.mode = b.dataset.mode; }
+    else if (b.dataset.legend) { look.legend = b.dataset.legend; }
     else if (b.hasAttribute("data-reset-look")) { look[skin] = JSON.parse(JSON.stringify(DEFAULT_LOOK[skin])); }
     else return;
     saveLook();
     applyLook();
-    var sel = b.dataset.pattern ? "[data-pattern='" + b.dataset.pattern + "']" : b.dataset.mode ? "[data-mode='" + b.dataset.mode + "']" : "[data-reset-look]";
+    var sel = b.dataset.pattern ? "[data-pattern='" + b.dataset.pattern + "']" : b.dataset.mode ? "[data-mode='" + b.dataset.mode + "']" : b.dataset.legend ? "[data-legend='" + b.dataset.legend + "']" : "[data-reset-look]";
     renderLook();
     focusSame(sel);
   });

@@ -17,7 +17,7 @@ Plain HTML/CSS/JS with no build step, so it deploys straight to GitHub Pages.
     Tap it in the box to bring it back to the spot it came from.
   - **Look**: pick a style, then choose how projects are coloured. The
     choice applies to every style:
-    - **By type**: one colour per project type (Languages, Planning, Home, Making, More), with a legend under the title.
+    - **By type**: one colour per project type (Languages, Planning, Home, Making, More), with a colour key under the title (you can hide it).
     - **Same**: every project uses the same colour.
     - **Different**: projects take turns through the palette.
 
