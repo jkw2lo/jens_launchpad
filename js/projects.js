@@ -2,7 +2,8 @@
 // on the launchpad automatically, even if it isn't listed below.
 window.GITHUB_USER = "jkw2lo";
 
-// Project types. Brutal colours tiles by type; the colours can be changed in Customize.
+// Project types. With colours set to "By type", each type gets one colour from the
+// current style's palette (in this order); the palettes can be changed in Customize.
 window.CATEGORIES = [
   { id: "languages", label: "Languages" },
   { id: "planning", label: "Planning" },
@@ -18,22 +19,21 @@ window.CATEGORIES = [
 //   name   button label
 //   blurb  one short line under the name (keep it under ~25 characters)
 //   icon   one of the keys in ICONS below
-//   cat    one of the CATEGORIES ids
-//   c1/c2  this project's own colours (used when Prism is set to "Different")
+//   cat    one of the CATEGORIES ids (used when colours are set to "By type")
 window.PROJECTS = [
-  { id: "cantonese", repo: "learn_cantonese_quest", name: "Cantonese Quest", blurb: "Speak & read Cantonese", icon: "speech", cat: "languages", c1: "#ff7a59", c2: "#ffd166" },
-  { id: "hanzi", repo: "learn_chinese_hanzi_quest", name: "Hanzi Quest", blurb: "Read Chinese characters", icon: "grid", cat: "languages", c1: "#ef476f", c2: "#ffb3c6" },
-  { id: "nihongo", repo: "learn_japanese_nihongo_quest", name: "Nihongo Quest", blurb: "Getting-by Japanese", icon: "torii", cat: "languages", c1: "#f94144", c2: "#90e0ef" },
-  { id: "groundwork", repo: "groundwork_habits_tasks", name: "Groundwork", blurb: "Habits & focus timer", icon: "sprout", cat: "planning", c1: "#06d6a0", c2: "#b8f2e6" },
-  { id: "planner", repo: "planner", name: "Magnet Board", blurb: "Weekly planner", icon: "magnet", cat: "planning", c1: "#4361ee", c2: "#f72585" },
-  { id: "year", repo: "yearly_calendar", name: "Year Register", blurb: "Your year at a glance", icon: "calendar", cat: "planning", c1: "#7209b7", c2: "#ffd166" },
-  { id: "trip", repo: "trip_planner", name: "Trip Board", blurb: "Plan trips day by day", icon: "pin", cat: "planning", c1: "#00b4d8", c2: "#ffb703" },
-  { id: "recipes", repo: "recipe_book", name: "Recipe Book", blurb: "Recipes without the fluff", icon: "pot", cat: "home", c1: "#fb8500", c2: "#8ecae6" },
-  { id: "shelf", repo: "skincare_shelf", name: "Shelf Life", blurb: "Skincare inventory", icon: "bottle", cat: "home", c1: "#ff8fab", c2: "#a0c4ff" },
-  { id: "writers", repo: "writers-blocks", name: "Writers Blocks", blurb: "Shape long-form writing", icon: "blocks", cat: "making", c1: "#3a86ff", c2: "#ffbe0b" },
-  { id: "awl", repo: "awl-gusset", name: "Awl & Gusset", blurb: "Leather bag patterns", icon: "bag", cat: "making", c1: "#bc6c25", c2: "#dda15e" },
-  { id: "notebook", repo: "notebook_portfolio", name: "Notebook Portfolio", blurb: "A digital junk journal", icon: "book", cat: "making", c1: "#8338ec", c2: "#ff006e" },
-  { id: "garage", repo: "jens_side_projects", name: "Jen's Side Projects", blurb: "The garage portfolio", icon: "garage", cat: "more", c1: "#2a9d8f", c2: "#e9c46a" }
+  { id: "cantonese", repo: "learn_cantonese_quest", name: "Cantonese Quest", blurb: "Speak & read Cantonese", icon: "speech", cat: "languages" },
+  { id: "hanzi", repo: "learn_chinese_hanzi_quest", name: "Hanzi Quest", blurb: "Read Chinese characters", icon: "grid", cat: "languages" },
+  { id: "nihongo", repo: "learn_japanese_nihongo_quest", name: "Nihongo Quest", blurb: "Getting-by Japanese", icon: "torii", cat: "languages" },
+  { id: "groundwork", repo: "groundwork_habits_tasks", name: "Groundwork", blurb: "Habits & focus timer", icon: "sprout", cat: "planning" },
+  { id: "planner", repo: "planner", name: "Magnet Board", blurb: "Weekly planner", icon: "magnet", cat: "planning" },
+  { id: "year", repo: "yearly_calendar", name: "Year Register", blurb: "Your year at a glance", icon: "calendar", cat: "planning" },
+  { id: "trip", repo: "trip_planner", name: "Trip Board", blurb: "Plan trips day by day", icon: "pin", cat: "planning" },
+  { id: "recipes", repo: "recipe_book", name: "Recipe Book", blurb: "Recipes without the fluff", icon: "pot", cat: "home" },
+  { id: "shelf", repo: "skincare_shelf", name: "Shelf Life", blurb: "Skincare inventory", icon: "bottle", cat: "home" },
+  { id: "writers", repo: "writers-blocks", name: "Writers Blocks", blurb: "Shape long-form writing", icon: "blocks", cat: "making" },
+  { id: "awl", repo: "awl-gusset", name: "Awl & Gusset", blurb: "Leather bag patterns", icon: "bag", cat: "making" },
+  { id: "notebook", repo: "notebook_portfolio", name: "Notebook Portfolio", blurb: "A digital junk journal", icon: "book", cat: "making" },
+  { id: "garage", repo: "jens_side_projects", name: "Jen's Side Projects", blurb: "The garage portfolio", icon: "garage", cat: "more" }
 ];
 
 // 24×24 line icons, drawn with the current text colour.

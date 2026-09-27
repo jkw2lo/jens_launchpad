@@ -28,15 +28,15 @@
     <header class="top">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-        <div class="brand-text">
-          <h1>Jen's Launchpad</h1>
-          <p class="summary" id="summary"></p>
-        </div>
+        <h1>Jen's Launchpad</h1>
       </div>
-      <button type="button" class="btn" id="customize" aria-pressed="false" aria-controls="editPanel">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
-        <span class="label">Customize</span>
-      </button>
+      <div class="top-right">
+        <p class="summary" id="summary" aria-live="polite"></p>
+        <button type="button" class="btn" id="customize" aria-pressed="false" aria-controls="editPanel">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+          <span class="label">Customize</span>
+        </button>
+      </div>
     </header>
 
     <ul class="legend" id="legend" aria-label="Project types"></ul>
@@ -59,6 +59,14 @@
         <ul class="box-items" id="boxItems"></ul>
       </div>
 
+      <div class="panel account" id="account">
+        <div class="box-head">
+          <span class="panel-title">Sync</span>
+          <span class="panel-note">Count launches across all your devices</span>
+        </div>
+        <div class="account-body" id="accountBody"></div>
+      </div>
+
       <div class="edit-hint">
         <p><span class="hint-drag">Drag tiles to reorder</span><span class="hint-grip">Drag <b>⠿</b> to reorder</span> · <b>✕</b> puts a project back in the box.</p>
         <button type="button" class="btn ghost small" id="resetOrder">Reset order</button>
@@ -67,12 +75,13 @@
 
     <ul class="grid" id="grid" aria-label="Projects"></ul>
 
-    <footer class="foot">Open counts cover the last 30 days and are kept on this device only.</footer>
+    <footer class="foot" id="foot"></footer>
   </div>
 
   <button type="button" class="btn primary done-fab" id="doneFab" hidden>Done</button>
 
   <script src="js/projects.js"></script>
+  <script src="js/sync.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

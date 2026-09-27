@@ -22,14 +22,18 @@
     { id: "brutal", label: "Brutal" },
     { id: "bauhaus", label: "Bauhaus" }
   ];
+  // Each style has a five-colour palette. "Project colours" decides how tiles use it:
+  //   type      – one colour per project type (palette order = CATEGORIES order)
+  //   same      – every project uses colour 1 (and colour 2 as its second shape)
+  //   different – projects take turns through the palette
+  var MODES = [["type", "By type"], ["same", "Same"], ["different", "Different"]];
   var DEFAULT_LOOK = {
-    mist: { bg: "#f3f4f6", tile: "#ffffff", accent: "#16181d" },
-    prism: { bg: "#fbf7f0", mode: "different", pattern: "a", c1: "#ff7a59", c2: "#ffd166" },
-    brutal: { bg: "#e6e2ff", accent: "#ff5fa2", languages: "#4f6bff", planning: "#a9c7ff", home: "#c9bcff", making: "#7b4dff", more: "#ffffff" },
-    bauhaus: { bg: "#efe8d8", mode: "different", pattern: "a", c1: "#d23a2b", c2: "#1f4f96" }
+    mode: "type",
+    mist: { bg: "#f3f4f6", tile: "#ffffff", accent: "#16181d", palette: ["#4f6bdc", "#1f9d8a", "#d98a1c", "#d9487a", "#5b6472"] },
+    prism: { bg: "#fbf7f0", pattern: "a", palette: ["#ff7a59", "#4361ee", "#06d6a0", "#f72585", "#ffd166"] },
+    brutal: { bg: "#e6e2ff", accent: "#ff5fa2", palette: ["#4f6bff", "#a9c7ff", "#c9bcff", "#7b4dff", "#ffffff"] },
+    bauhaus: { bg: "#efe8d8", pattern: "a", palette: ["#d23a2b", "#1f4f96", "#e8b124", "#141414", "#8f8676"] }
   };
-  // Colours for projects found on GitHub that aren't listed in projects.js.
-  var AUTO_COLOURS = [["#ff7a59", "#ffd166"], ["#4361ee", "#f72585"], ["#06d6a0", "#ffd166"], ["#7209b7", "#90e0ef"], ["#fb8500", "#8ecae6"]];
 
   var CATS = window.CATEGORIES || [];
   var CAT_IDS = CATS.map(function (c) { return c.id; });
@@ -73,7 +77,7 @@
       byId[p.id] = p;
       p.url = p.url || "https://" + OWNER + ".github.io/" + p.repo + "/";
       if (CAT_IDS.indexOf(p.cat) < 0) p.cat = "more";
-      p.alt = i % 2; // used by Bauhaus "Different" to alternate the two colours
+      p.idx = i; // stable slot for "Different" colours
     });
   }
   setProjects(window.PROJECTS.slice());
@@ -112,9 +116,10 @@
     return all;
   }
   function recordOpen(id) {
-    var all = recentOpens();
-    (all[id] = all[id] || []).push(Date.now());
+    var all = recentOpens(), t = Date.now();
+    (all[id] = all[id] || []).push(t);
     save(KEY.opens, all);
+    if (window.LaunchpadSync) LaunchpadSync.recordOpen(id, t);
   }
   function ago(t) {
     var m = Math.round((Date.now() - t) / 60000);
@@ -161,8 +166,7 @@
   // ---------- rendering ----------
   function tileHtml(p) {
     return (
-      '<li class="tile" data-id="' + esc(p.id) + '" data-cat="' + esc(p.cat) + '" data-alt="' + p.alt + '"' +
-      ' style="--pc1:' + esc(p.c1 || "#4f6bff") + ";--pc2:" + esc(p.c2 || "#ff5fa2") + '">' +
+      '<li class="tile" data-id="' + esc(p.id) + '" data-cat="' + esc(p.cat) + '"' + tileVars(p) + ">" +
         '<a class="tile-link" href="' + esc(p.url) + '" draggable="false"' + (editing ? ' tabindex="-1"' : "") + ">" +
           '<span class="deco" aria-hidden="true"><i class="d1"></i><i class="d2"></i></span>' +
           '<span class="icon">' + icon(p.icon) + "</span>" +
@@ -183,6 +187,27 @@
     var tmp = document.createElement("ul");
     tmp.innerHTML = tileHtml(p);
     return tmp.firstChild;
+  }
+
+  // ---------- project colours ----------
+  function colourSlot(p, pal) {
+    if (look.mode === "same") return 0;
+    if (look.mode === "type") return Math.max(0, CAT_IDS.indexOf(p.cat)) % pal.length;
+    return p.idx % pal.length;
+  }
+  function tileVars(p) {
+    var pal = look[currentSkin()].palette;
+    var k = colourSlot(p, pal);
+    var c1 = pal[k], c2 = pal[(k + 1) % pal.length], ink = inkFor(c1);
+    return ' style="--p1:' + esc(c1) + ";--p2:" + esc(c2) + ";--p1-ink:" + ink +
+      ";--p1-muted:" + (ink === "#ffffff" ? "rgba(255,255,255,.85)" : "rgba(13,11,31,.72)") + '"';
+  }
+  function paintTiles() {
+    tiles().forEach(function (t) {
+      var tmp = document.createElement("div");
+      tmp.innerHTML = "<i" + tileVars(byId[t.dataset.id]) + "></i>";
+      t.setAttribute("style", tmp.firstChild.getAttribute("style"));
+    });
   }
 
   function renderGrid() {
@@ -213,21 +238,30 @@
       total += n;
       if (n > topN) { topN = n; top = byId[t.dataset.id]; }
       t.querySelector(".stat").innerHTML =
-        "<b>" + n + "</b> " + (n === 1 ? "open" : "opens") +
+        "<b>" + n + "</b> <span class=\"unit\">" + (n === 1 ? "open" : "opens") + "</span>" +
         (n ? '<span class="sep"> · </span><span class="last">' + ago(list[list.length - 1]) + "</span>" : "");
       t.classList.toggle("is-cold", !n);
     });
-    var count = tiles().length;
-    summary.textContent = total
-      ? total + (total === 1 ? " launch" : " launches") + " this month · most used: " + top.name
-      : count + (count === 1 ? " project" : " projects") + ". Tap one to open it.";
+    summary.innerHTML = total
+      ? '<span class="sum-line"><b>' + total + "</b> " + (total === 1 ? "launch" : "launches") + " this month</span>" +
+        '<span class="sum-line">Most used: <b>' + esc(top.name) + "</b></span>"
+      : '<span class="sum-line">No launches yet this month</span>';
+    renderFoot();
+  }
+  function renderFoot() {
+    var signedIn = window.LaunchpadSync && LaunchpadSync.state.status === "in";
+    document.getElementById("foot").textContent = signedIn
+      ? "Launch counts cover the last 30 days, across every device you've signed in on."
+      : "Launch counts cover the last 30 days on this device. Sign in under Customize to count every device.";
   }
 
   function renderLegend() {
     var used = {};
     tiles().forEach(function (t) { used[t.dataset.cat] = true; });
-    legend.innerHTML = CATS.filter(function (c) { return used[c.id]; }).map(function (c) {
-      return '<li><i style="background:var(--cat-' + c.id + ')"></i>' + esc(c.label) + "</li>";
+    var pal = look[currentSkin()].palette;
+    legend.hidden = look.mode !== "type";
+    legend.innerHTML = CATS.map(function (c, i) {
+      return used[c.id] ? '<li><i style="background:' + esc(pal[i % pal.length]) + '"></i>' + esc(c.label) + "</li>" : "";
     }).join("");
   }
 
@@ -241,8 +275,16 @@
   // ---------- look (skin, colours, patterns) ----------
   var look = (function () {
     var saved = load(KEY.look, {}) || {};
-    var out = {};
-    SKINS.forEach(function (s) { out[s.id] = Object.assign({}, DEFAULT_LOOK[s.id], saved[s.id] || {}); });
+    var out = { mode: MODES.some(function (m) { return m[0] === saved.mode; }) ? saved.mode : DEFAULT_LOOK.mode };
+    SKINS.forEach(function (s) {
+      var d = DEFAULT_LOOK[s.id], v = saved[s.id] || {};
+      var o = Object.assign({}, d, v);
+      o.palette = d.palette.map(function (c, i) {
+        var got = Array.isArray(v.palette) ? v.palette[i] : v[CAT_IDS[i]]; // older saves kept Brutal colours by type name
+        return /^#[0-9a-f]{6}$/i.test(got || "") ? got : c;
+      });
+      out[s.id] = o;
+    });
     return out;
   })();
   function currentSkin() {
@@ -254,28 +296,22 @@
     var m = look.mist, p = look.prism, b = look.brutal, h = look.bauhaus;
     var css = "";
     css += '[data-skin="mist"]{--bg:' + m.bg + ";--tile-bg:" + m.tile + ";--accent:" + m.accent + ";--accent-ink:" + inkFor(m.accent) +
-      ";--ctrl-on-bg:" + m.accent + ";--ctrl-on-ink:" + inkFor(m.accent) + ";--icon-ink:" + m.accent + "}";
+      ";--ctrl-on-bg:" + m.accent + ";--ctrl-on-ink:" + inkFor(m.accent) + "}";
     css += '[data-skin="prism"]{--bg:' + p.bg + "}";
-    css += '[data-skin="prism"] .tile{' + (p.mode === "same" ? "--p1:" + p.c1 + ";--p2:" + p.c2 : "--p1:var(--pc1);--p2:var(--pc2)") + "}";
     css += '[data-skin="brutal"]{--bg:' + b.bg + ";--accent:" + b.accent + ";--accent-ink:" + inkFor(b.accent) +
       ";--stat-bg:" + b.accent + ";--stat-ink:" + inkFor(b.accent) + ";--ctrl-on-bg:" + b.accent + ";--ctrl-on-ink:" + inkFor(b.accent) +
-      ";--focus:" + b.accent + ";--title-shadow:" + b.accent + ";" +
-      CAT_IDS.map(function (c) { return "--cat-" + c + ":" + (b[c] || "#ffffff"); }).join(";") + "}";
-    CAT_IDS.forEach(function (c) {
-      var bg = b[c] || "#ffffff", ink = inkFor(bg);
-      css += '[data-skin="brutal"] .tile[data-cat="' + c + '"]{--tile-bg:' + bg + ";--tile-ink:" + ink +
-        ";--tile-muted:" + (ink === "#ffffff" ? "rgba(255,255,255,.85)" : "rgba(13,11,31,.78)") + "}";
-    });
-    css += '[data-skin="bauhaus"]{--bg:' + h.bg + ";--b1:" + h.c1 + ";--b2:" + h.c2 + ";--ctrl-on-bg:" + h.c1 + ";--ctrl-on-ink:" + inkFor(h.c1) +
-      ";--accent:" + h.c2 + ";--accent-ink:" + inkFor(h.c2) + ";--focus:" + h.c1 + "}";
-    css += '[data-skin="bauhaus"] .tile{--p1:' + h.c1 + ";--p2:" + h.c2 + "}";
-    if (h.mode !== "same") css += '[data-skin="bauhaus"] .tile[data-alt="1"]{--p1:' + h.c2 + ";--p2:" + h.c1 + "}";
+      ";--focus:" + b.accent + ";--title-shadow:" + b.accent + "}";
+    css += '[data-skin="bauhaus"]{--bg:' + h.bg + ";--b1:" + h.palette[0] + ";--b2:" + h.palette[1] +
+      ";--ctrl-on-bg:" + h.palette[0] + ";--ctrl-on-ink:" + inkFor(h.palette[0]) +
+      ";--accent:" + h.palette[1] + ";--accent-ink:" + inkFor(h.palette[1]) + ";--focus:" + h.palette[0] + "}";
     lookStyle.textContent = css;
 
     var skin = currentSkin();
     grid.dataset.pat = look[skin].pattern || "a";
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = look[skin].bg;
+    paintTiles();
+    renderLegend();
   }
 
   function seg(key, label, options, value) {
@@ -290,12 +326,18 @@
         return '<label class="colour"><input type="color" data-look="' + f[0] + '" value="' + esc(values[f[0]]) + '"><span>' + esc(f[1]) + "</span></label>";
       }).join("") + "</div></div>";
   }
+  function paletteField(names, pal) {
+    return '<div class="field"><span class="field-label">Colours</span><div class="colours">' +
+      names.map(function (n, i) {
+        return '<label class="colour"><input type="color" data-pal="' + i + '" value="' + esc(pal[i]) + '"><span>' + esc(n) + "</span></label>";
+      }).join("") + "</div></div>";
+  }
   function patterns(value) {
-    var sample = projects[0] || {};
+    var sample = projects[0];
     return '<div class="field"><span class="field-label">Pattern</span><div class="pats" role="radiogroup" aria-label="Pattern">' +
       ["a", "b", "c"].map(function (k) {
         return '<button type="button" role="radio" class="pat" data-pattern="' + k + '" aria-checked="' + (k === value) + '" aria-label="Pattern ' + k.toUpperCase() + '">' +
-          '<span class="pat-view" data-pat="' + k + '"><span class="tile mini" data-alt="0" style="--pc1:' + esc(sample.c1 || "#ff7a59") + ";--pc2:" + esc(sample.c2 || "#ffd166") + '">' +
+          '<span class="pat-view" data-pat="' + k + '"><span class="tile mini"' + tileVars(sample) + ">" +
           '<span class="deco" aria-hidden="true"><i class="d1"></i><i class="d2"></i></span></span></span>' +
           '<span class="pat-label">' + k.toUpperCase() + "</span></button>";
       }).join("") + "</div></div>";
@@ -309,23 +351,21 @@
           '<span class="sw sw-' + s.id + '" aria-hidden="true"></span>' + s.label + "</button>";
       }).join("") + "</div></div>";
 
-    if (skin === "mist") {
-      html += colours("Colours", [["bg", "Background"], ["tile", "Tiles"], ["accent", "Accent"]], L);
-    } else if (skin === "prism") {
-      html += patterns(L.pattern);
-      html += seg("mode", "Shape colours", [["different", "Different"], ["same", "Same"]], L.mode);
-      html += colours("Colours", (L.mode === "same" ? [["c1", "Colour 1"], ["c2", "Colour 2"]] : []).concat([["bg", "Background"]]), L);
-    } else if (skin === "brutal") {
-      html += colours("Colours by type", CATS.map(function (c) { return [c.id, c.label]; }), L);
-      html += colours("Page", [["accent", "Accent"], ["bg", "Background"]], L);
-    } else {
-      html += patterns(L.pattern);
-      html += seg("mode", "Shape colours", [["different", "Different"], ["same", "Same"]], L.mode);
-      html += colours("Colours", [["c1", "Colour 1"], ["c2", "Colour 2"], ["bg", "Background"]], L);
-    }
+    html += seg("mode", "Project colours", MODES, look.mode);
+    if (L.pattern) html += patterns(L.pattern);
+    var names = look.mode === "type" ? CATS.map(function (c) { return c.label; })
+      : look.mode === "same" ? ["Colour", "Second colour"]
+      : ["Colour 1", "Colour 2", "Colour 3", "Colour 4", "Colour 5"];
+    // Mist and Brutal only use one colour per tile, so "Same" needs just the one.
+    if (look.mode === "same" && (skin === "mist" || skin === "brutal")) names = ["Colour"];
+    html += paletteField(names, L.palette);
+    var page = [["bg", "Background"]];
+    if (skin === "mist") page = [["bg", "Background"], ["tile", "Tiles"], ["accent", "Buttons"]];
+    if (skin === "brutal") page = [["bg", "Background"], ["accent", "Accent"]];
+    html += colours("Page", page, L);
     html += '<div class="look-foot"><button type="button" class="btn ghost small" data-reset-look>Restore default ' + esc(skinLabel(skin)) + " look</button></div>";
     lookBody.innerHTML = html;
-    lookNote.textContent = skinLabel(skin);
+    lookNote.textContent = skinLabel(skin) + " · " + MODES.filter(function (m) { return m[0] === look.mode; })[0][1].toLowerCase() + " colours";
   }
   function skinLabel(id) {
     for (var i = 0; i < SKINS.length; i++) if (SKINS[i].id === id) return SKINS[i].label;
@@ -347,8 +387,8 @@
     var skin = currentSkin();
     if (b.dataset.skinChoice) { setSkin(b.dataset.skinChoice, true); focusSame("[data-skin-choice='" + b.dataset.skinChoice + "']"); return; }
     if (b.dataset.pattern) { look[skin].pattern = b.dataset.pattern; }
-    else if (b.dataset.mode) { look[skin].mode = b.dataset.mode; }
-    else if (b.hasAttribute("data-reset-look")) { look[skin] = Object.assign({}, DEFAULT_LOOK[skin]); }
+    else if (b.dataset.mode) { look.mode = b.dataset.mode; }
+    else if (b.hasAttribute("data-reset-look")) { look[skin] = JSON.parse(JSON.stringify(DEFAULT_LOOK[skin])); }
     else return;
     saveLook();
     applyLook();
@@ -357,14 +397,14 @@
     focusSame(sel);
   });
   lookBody.addEventListener("input", function (e) {
-    var key = e.target.dataset && e.target.dataset.look;
-    if (!key) return;
-    look[currentSkin()][key] = e.target.value;
+    var d = e.target.dataset || {};
+    if (d.look) look[currentSkin()][d.look] = e.target.value;
+    else if (d.pal) look[currentSkin()].palette[+d.pal] = e.target.value;
+    else return;
     applyLook();
-    renderLegend();
   });
   lookBody.addEventListener("change", function (e) {
-    if (e.target.dataset && e.target.dataset.look) saveLook();
+    if (e.target.dataset && (e.target.dataset.look || e.target.dataset.pal)) saveLook();
   });
   // Arrow keys move between options in each radio group.
   lookBody.addEventListener("keydown", function (e) {
@@ -593,10 +633,7 @@
     var known = {};
     window.PROJECTS.forEach(function (p) { known[p.repo] = true; });
     var extra = repos.filter(function (r) { return !known[r.name] && r.name !== SELF_REPO; }).map(function (r) {
-      var hash = 0;
-      for (var i = 0; i < r.name.length; i++) hash = (hash * 31 + r.name.charCodeAt(i)) >>> 0;
-      var c = AUTO_COLOURS[hash % AUTO_COLOURS.length];
-      return { id: "gh:" + r.name, repo: r.name, name: pretty(r.name), blurb: r.desc || "New project", icon: "spark", cat: "more", c1: c[0], c2: c[1] };
+      return { id: "gh:" + r.name, repo: r.name, name: pretty(r.name), blurb: r.desc || "New project", icon: "spark", cat: "more" };
     });
     var sig = extra.map(function (p) { return p.id; }).join(",");
     if (sig === lastExtra) return;
@@ -622,6 +659,35 @@
       .catch(function () {});
   }
 
+  // ---------- sync (sign in to count launches on every device) ----------
+  var accountBody = document.getElementById("accountBody");
+  function renderAccount() {
+    var st = LaunchpadSync.state, html = "";
+    if (st.status === "in") {
+      var who = st.user && (st.user.email || st.user.name) || "your account";
+      html = '<p class="account-line"><span class="dot on" aria-hidden="true"></span>Signed in as <b>' + esc(who) + "</b>. Launch counts are shared across every device signed in to this account.</p>" +
+        '<div class="account-actions"><button type="button" class="btn ghost small" data-signout>Sign out</button>' +
+        '<span class="account-note">Signing out here also signs Groundwork out on this device.</span></div>';
+    } else if (st.status === "loading") {
+      html = '<p class="account-line"><span class="dot busy" aria-hidden="true"></span>Connecting…</p>';
+    } else {
+      html = (st.status === "error" ? '<p class="account-line error" role="alert">' + esc(st.msg) + "</p>" : "") +
+        '<div class="account-actions">' +
+        '<button type="button" class="btn small" data-signin="google">Sign in with Google</button>' +
+        '<button type="button" class="btn small" data-signin="github">Sign in with GitHub</button>' +
+        (st.status === "error" && st.user ? '<button type="button" class="btn ghost small" data-signout>Sign out</button>' : "") +
+        "</div>" +
+        '<p class="account-note">Use the same one on every device. It\'s the same sign-in as Groundwork.</p>';
+    }
+    accountBody.innerHTML = html;
+  }
+  accountBody.addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    if (b.dataset.signin) LaunchpadSync.signIn(b.dataset.signin);
+    else if (b.hasAttribute("data-signout")) LaunchpadSync.signOut();
+  });
+
   // ---------- go ----------
   var urlSkin = null;
   try { urlSkin = new URLSearchParams(location.search).get("skin"); } catch (e) {}
@@ -629,4 +695,9 @@
   applyLook();
   render();
   discover();
+  LaunchpadSync.init({
+    change: function () { renderAccount(); renderFoot(); },
+    getLocal: recentOpens,
+    setLocal: function (opens) { save(KEY.opens, opens); renderStats(); }
+  });
 })();

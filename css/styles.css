@@ -252,16 +252,20 @@ body.editing .page { padding-bottom: 110px; }
 /* ---------- header ---------- */
 .top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px 24px;
   margin-bottom: 22px;
 }
 @media (min-width: 700px) {
-  .top { align-items: flex-end; margin-bottom: 32px; }
+  .top { margin-bottom: 30px; }
 }
 .brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
-.brand-text { min-width: 0; }
+.top-right { display: flex; align-items: center; gap: 18px; margin-left: auto; }
+@media (max-width: 699px) {
+  .top-right { width: 100%; justify-content: space-between; }
+}
 h1 {
   margin: 0;
   font-family: var(--display);
@@ -271,8 +275,17 @@ h1 {
   font-size: clamp(1.7rem, 5vw, 2.9rem);
   line-height: 1.05;
 }
-.summary { margin: 6px 0 0; color: var(--muted); font-size: 0.88rem; }
-@media (min-width: 700px) { .summary { font-size: 0.95rem; } }
+.summary {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+  text-align: right;
+}
+.summary b { color: var(--ink); font-weight: 700; }
+@media (max-width: 699px) { .summary { text-align: left; } }
 
 .brand-mark { display: none; position: relative; flex: none; width: 52px; height: 52px; }
 .brand-mark i { position: absolute; display: block; }
@@ -323,20 +336,25 @@ h1 {
 [data-skin="brutal"] .done-fab { box-shadow: 5px 5px 0 #0d0b1f; }
 @media (min-width: 700px) { .done-fab { display: none !important; } }
 
-/* ---------- Brutal's colour-by-type legend ---------- */
-.legend { display: none; }
-[data-skin="brutal"] .legend {
+/* ---------- colour-by-type legend (shown when colours are "By type") ---------- */
+.legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 16px;
-  margin: -6px 0 22px;
+  gap: 6px 16px;
+  margin: -6px 0 20px;
   padding: 0;
   list-style: none;
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
 }
+.legend:empty { display: none; }
 .legend li { display: inline-flex; align-items: center; gap: 7px; }
-.legend i { width: 14px; height: 14px; border: 2.5px solid #0d0b1f; border-radius: 4px; }
+.legend i { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); }
+[data-skin="brutal"] .legend { color: var(--ink); font-weight: 700; }
+[data-skin="brutal"] .legend i { width: 14px; height: 14px; border: 2.5px solid #0d0b1f; border-radius: 4px; box-shadow: none; }
+[data-skin="bauhaus"] .legend { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; }
+[data-skin="bauhaus"] .legend i { border-radius: 0; box-shadow: none; }
 
 /* ---------- customize panel ---------- */
 .edit { display: grid; gap: 14px; margin-bottom: 24px; }
@@ -519,6 +537,15 @@ details[open] .chev { transform: rotate(180deg); }
 .chip-plus svg { width: 16px; height: 16px; stroke-width: 2.4; display: block; }
 .box-empty { padding: 4px 2px; font-size: 0.86rem; color: var(--ctrl-muted); }
 
+.account-body { display: grid; gap: 10px; padding: 0 18px 16px; }
+.account-line { margin: 0; font-size: 0.9rem; }
+.account-line.error { color: #b42318; font-weight: 600; }
+.account-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.account-note { margin: 0; font-size: 0.8rem; color: var(--ctrl-muted); }
+.dot { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; vertical-align: 1px; }
+.dot.on { background: #16a34a; }
+.dot.busy { background: #d97706; }
+
 .edit-hint {
   display: flex;
   flex-wrap: wrap;
@@ -558,7 +585,7 @@ details[open] .chev { transform: rotate(180deg); }
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 196px;
+  min-height: 204px;
   height: 100%;
   padding: 20px;
   background: var(--tile-bg);
@@ -711,7 +738,21 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   .name { font-size: 1.04rem; }
   [data-skin="bauhaus"] .name { font-size: 0.95rem; }
   .blurb { font-size: 0.85rem; }
-  .stat { align-self: center; margin: 0; flex: none; font-size: 0.75rem; padding: 3px 9px; }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: center;
+    min-width: 46px;
+    margin: 0;
+    padding: 4px 8px;
+    flex: none;
+    font-size: 0.64rem;
+    line-height: 1.15;
+    border-radius: 12px;
+  }
+  [data-skin="bauhaus"] .stat { border-radius: 0; }
+  .stat b { font-size: 1rem; }
   .stat .sep,
   .stat .last { display: none; }
 
@@ -733,6 +774,10 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 /* =========================================================
    Skin extras
    ========================================================= */
+
+/* ---- Mist: the project colour only tints the icon ---- */
+[data-skin="mist"] .icon { background: color-mix(in srgb, var(--p1) 13%, #ffffff); color: color-mix(in srgb, var(--p1) 85%, #000000); }
+[data-skin="mist"] .chip-icon { background: #f3f4f6; }
 
 /* ---- Prism: two overlapping shapes, same pattern on every tile ---- */
 [data-skin="prism"] .deco { display: block; }
@@ -768,7 +813,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   [data-skin="prism"] .grid .deco::after { display: none; }
 }
 
-/* ---- Brutal: hazard-stripe corner, accent-shadow title ---- */
+/* ---- Brutal: tile filled with the project colour, hazard-stripe corner ---- */
+[data-skin="brutal"] .tile { --tile-bg: var(--p1); --tile-ink: var(--p1-ink); --tile-muted: var(--p1-muted); }
 [data-skin="brutal"] .deco { display: block; }
 [data-skin="brutal"] .d1 {
   top: 0;
@@ -784,19 +830,39 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 [data-skin="brutal"] .brand-mark i:nth-child(2) { width: 14px; height: 14px; left: 16px; top: 16px; background: #0d0b1f; border-radius: 50%; transform: rotate(-8deg); }
 [data-skin="brutal"] .seg button { font-weight: 700; }
 
-/* ---- Bauhaus: same pattern on every tile, in the two chosen colours ---- */
-[data-skin="bauhaus"] .deco { display: block; }
+/* ---- Bauhaus: a small square composition in the tile's corner ----
+   Every pattern sits inside one 72×72 box split into a 2×2 grid, so the
+   shapes line up with each other and never run into the icon or text. */
+[data-skin="bauhaus"] .deco {
+  display: block;
+  inset: auto;
+  top: calc(var(--u) * 16);
+  right: calc(var(--u) * 16);
+  width: calc(var(--u) * 72);
+  height: calc(var(--u) * 72);
+}
 [data-skin="bauhaus"] .d1 { background: var(--p1); }
 [data-skin="bauhaus"] .d2 { background: var(--p2); }
-/* A: sun + square */
-[data-skin="bauhaus"] [data-pat="a"] .d1 { width: calc(var(--u) * 112); height: calc(var(--u) * 112); top: calc(var(--u) * -30); right: calc(var(--u) * -30); border-radius: 50%; }
-[data-skin="bauhaus"] [data-pat="a"] .d2 { width: calc(var(--u) * 28); height: calc(var(--u) * 28); top: calc(var(--u) * 66); right: calc(var(--u) * 70); }
-/* B: arch + dot */
-[data-skin="bauhaus"] [data-pat="b"] .d1 { width: calc(var(--u) * 100); height: calc(var(--u) * 50); top: 0; right: calc(var(--u) * 16); border-radius: 0 0 calc(var(--u) * 100) calc(var(--u) * 100); }
-[data-skin="bauhaus"] [data-pat="b"] .d2 { width: calc(var(--u) * 26); height: calc(var(--u) * 26); top: calc(var(--u) * 62); right: calc(var(--u) * 53); border-radius: 50%; }
-/* C: quarter circle + square */
-[data-skin="bauhaus"] [data-pat="c"] .d1 { width: calc(var(--u) * 104); height: calc(var(--u) * 104); top: 0; right: 0; border-radius: 0 0 0 100%; }
-[data-skin="bauhaus"] [data-pat="c"] .d2 { width: calc(var(--u) * 26); height: calc(var(--u) * 26); top: calc(var(--u) * 14); right: calc(var(--u) * 14); }
+[data-skin="bauhaus"] .deco::after { content: ""; position: absolute; background: #141414; }
+/* A: two quarter circles facing each other + a dot */
+[data-skin="bauhaus"] [data-pat="a"] .d1 { top: 0; left: 0; width: 50%; height: 50%; border-radius: 0 0 100% 0; }
+[data-skin="bauhaus"] [data-pat="a"] .d2 { right: 0; bottom: 0; width: 50%; height: 50%; border-radius: 100% 0 0 0; }
+[data-skin="bauhaus"] [data-pat="a"] .deco::after { top: 12.5%; right: 12.5%; width: 25%; height: 25%; border-radius: 50%; }
+/* B: an arch over a circle and a triangle */
+[data-skin="bauhaus"] [data-pat="b"] .d1 { top: 0; left: 0; width: 100%; height: 50%; border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+[data-skin="bauhaus"] [data-pat="b"] .d2 { right: 0; bottom: 0; width: 50%; height: 50%; border-radius: 50%; }
+[data-skin="bauhaus"] [data-pat="b"] .deco::after { left: 0; bottom: 0; width: 50%; height: 50%; clip-path: polygon(0 0, 100% 100%, 0 100%); }
+/* C: a target */
+[data-skin="bauhaus"] [data-pat="c"] .d1 { inset: 0; border-radius: 50%; }
+[data-skin="bauhaus"] [data-pat="c"] .d2 { top: 25%; left: 25%; width: 50%; height: 50%; border-radius: 50%; }
+[data-skin="bauhaus"] [data-pat="c"] .deco::after { top: 42.5%; left: 42.5%; width: 15%; height: 15%; border-radius: 50%; }
+/* phone list: the composition sits at the row's right end, with the count beside it */
+@media (max-width: 699px) {
+  [data-skin="bauhaus"] .grid .tile-link { --u: 0.56px; }
+  [data-skin="bauhaus"] .deco { top: 50%; right: 14px; transform: translateY(-50%); }
+  [data-skin="bauhaus"] body:not(.editing) .grid .tile-link { padding-right: 66px; }
+  [data-skin="bauhaus"] .grid .name { font-size: 0.92rem; letter-spacing: 0.035em; }
+}
 [data-skin="bauhaus"] .brand-mark i:nth-child(1) { width: 30px; height: 30px; left: 0; top: 0; border-radius: 50%; background: var(--b1, #d23a2b); }
 [data-skin="bauhaus"] .brand-mark i:nth-child(2) { width: 26px; height: 26px; right: 0; bottom: 0; background: var(--b2, #1f4f96); }
 [data-skin="bauhaus"] .brand-mark i:nth-child(3) { width: 24px; height: 22px; left: 2px; bottom: 0; background: #141414; clip-path: polygon(50% 0, 100% 100%, 0 100%); }

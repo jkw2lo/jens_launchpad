@@ -15,14 +15,19 @@ Plain HTML/CSS/JS with no build step, so it deploys straight to GitHub Pages.
   - **Reorder**: drag tiles (on a phone, drag the ⠿ handle) or use the arrows.
   - **The box**: ✕ puts a project back in the box, where nothing is lost.
     Tap it in the box to bring it back to the spot it came from.
-  - **Look**: pick a style and change its colours.
-    - **Mist**: minimal white/grey. Change the background, tile and accent colours.
-    - **Prism**: colourful shapes. Pattern A/B/C, with each project's own colours or one colour pair for all.
-    - **Brutal**: neo-brutalist. Tiles are coloured by project type (Languages, Planning, Home, Making, More).
-    - **Bauhaus**: two colours on cream. Pattern A/B/C, alternating or same colours.
+  - **Look**: pick a style, then choose how projects are coloured. The
+    choice applies to every style:
+    - **By type**: one colour per project type (Languages, Planning, Home, Making, More), with a legend under the title.
+    - **Same**: every project uses the same colour.
+    - **Different**: projects take turns through the palette.
 
-Everything is saved in this browser's localStorage, so each device keeps its
-own setup. Keys are prefixed `jens_launchpad:` because every project on
+    Each style has its own editable five-colour palette. Mist tints the icons,
+    Prism colours its shapes, Brutal fills the tiles, and Bauhaus colours a small
+    square composition. Prism and Bauhaus also have patterns A, B and C.
+  - **Sync**: sign in to count launches across all your devices (see below).
+
+Order, box and look are saved in this browser's localStorage, so each device
+keeps its own setup. Keys are prefixed `jens_launchpad:` because every project on
 `jkw2lo.github.io` shares the same storage. You can link to a style directly with `?skin=brutal`.
 
 ## New projects
@@ -41,11 +46,32 @@ To give a project a nicer name, blurb, icon or type, add it to
 `icon` is one of the keys in `ICONS` in the same file, and `cat` is one of the
 `CATEGORIES`. Keep blurbs under about 25 characters so they fit on one line.
 
+## Sync (launch counts across devices)
+
+Sign in under Customize → Sync with Google or GitHub. This uses the shared Firebase
+project **`github-projects-5d4e4`**, the same one as Groundwork (config in
+`js/sync.js`). Each account has one document, `launchpad/{uid}`, holding
+the open timestamps. Devices merge by union, so nothing gets overwritten, and
+opens made while signed out are added the next time you sign in.
+
+**One-time setup:** add this rule in the Firebase console → Firestore Database →
+Rules, next to the existing `groundwork` rule, then Publish:
+
+```
+match /launchpad/{uid} {
+  allow read, write: if request.auth != null && request.auth.uid == uid;
+}
+```
+
+Because Groundwork is on the same site and uses the same project, signing in to
+one signs in to the other on that device, and the same goes for signing out.
+
 ## Files
 
 ```
 index.html        page skeleton
 js/projects.js    the project list + icons
-js/app.js         rendering, reordering, open counts, skin switching
+js/app.js         rendering, reordering, the box, open counts, look
+js/sync.js        optional sign-in + launch-count sync (Firebase)
 css/styles.css    layout + the four skins
 ```
