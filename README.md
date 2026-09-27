@@ -18,7 +18,13 @@ Plain HTML/CSS/JS with no build step, so it deploys straight to GitHub Pages.
     and then a square. Dropping onto a taken square swaps the two. Empty squares
     stay empty on the page. Projects not on the board wait in the tray underneath,
     and new projects take the first free square. On a phone the board edits as a
-    compact grid of small squares and displays as a list in reading order.
+    grid of small icon squares, like a home screen.
+  - **Multiple layouts**, like Groundwork's: the tabs at the top of Layout
+    switch which layout you're editing, and **+ New layout** copies the one on
+    screen. Each layout has its own name, mode, order and board. Layouts are
+    shared by every device, but **each device picks which one it shows**
+    (**Use on this device**, remembered by that browser), so a phone can show a
+    compact "Phone" grid while the desktop shows "Main". Up to 8 layouts.
   - **The box**: ✕ puts a project back in the box, where nothing is lost.
     Tap it in the box to bring it back to the spot it came from.
   - **Look**: pick a style, then choose how projects are coloured. The
@@ -60,7 +66,7 @@ project **`github-projects-5d4e4`**, the same one as Groundwork (config in
 
 - **Launch counts** merge by union, so nothing is overwritten. Launches made while
   signed out are added the next time you sign in.
-- **Settings** (order, board layout, the box, style, colours and patterns) follow the most
+- **Settings** (layouts, the box, style, colours and patterns; not which layout a device uses) follow the most
   recent change. Change something on one device and the others update live.
   When a device signs in for the first time, it takes the account's settings,
   unless it was customised more recently than the account.

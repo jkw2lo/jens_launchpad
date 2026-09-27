@@ -809,7 +809,53 @@ body.picking .tray-label { border-color: var(--focus); color: var(--ink); }
 .tile.picked .tile-link { outline: 3px solid var(--focus); outline-offset: 4px; transform: scale(0.97); }
 
 /* Layout panel */
-.layout-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 0 18px 16px; }
+.layout-bar { display: grid; gap: 12px; padding: 0 18px 16px; }
+.layout-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.layout-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ctrl-ink) 12%, transparent);
+}
+.layout-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  background: transparent;
+  color: var(--ctrl-ink);
+  border: var(--ctrl-border);
+  border-radius: var(--ctrl-radius);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.layout-tabs [aria-selected="true"] { background: var(--ctrl-on-bg); color: var(--ctrl-on-ink); }
+.layout-tabs .tab-new { border-style: dashed; color: var(--ctrl-muted); }
+.layout-tabs button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.tab-badge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+[data-skin="bauhaus"] .layout-tabs button,
+[data-skin="bauhaus"] .tab-badge { text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.74rem; border-radius: 0; }
+.name-field { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: var(--ctrl-muted); }
+.name-field input {
+  width: 13em;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ctrl-ink);
+  background: var(--chip-bg);
+  border: var(--ctrl-border);
+  border-radius: var(--ctrl-radius);
+}
+.name-field input:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.use-note { font-size: 0.85rem; font-weight: 600; color: var(--ctrl-muted); }
 .stepper {
   display: inline-flex;
   align-items: center;
@@ -839,45 +885,46 @@ body.picking .tray-label { border-color: var(--focus); color: var(--ink); }
 
 @media (max-width: 699px) {
   .layout-bar .seg { flex: 1 1 100%; }
-  /* the phone list shows the board in reading order, skipping empty squares */
-  .grid.board { grid-template-columns: minmax(0, 1fr); }
-  body:not(.editing) .board .slot { display: none; }
+  .name-field { flex: 1 1 100%; }
+  .name-field input { flex: 1; width: auto; }
 
-  /* editing on a phone: a compact board of small squares; tap to pick, tap to place */
-  .editing .grid.board { grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 8px; }
-  .editing .board .tile-link {
+  /* a custom grid on a phone: small squares with an icon and name, like a home screen */
+  .grid.board { grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 10px; }
+  .grid.board .tile-link {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
     min-height: 0;
     aspect-ratio: 1;
-    padding: 6px;
+    padding: 8px 6px;
     text-align: center;
     outline-offset: 2px;
   }
-  .editing .board .icon { width: 34px; height: 34px; }
-  .editing .board .icon svg { width: 18px; height: 18px; }
-  .editing .board .text { flex: none; width: 100%; }
-  .editing .board .name {
+  .grid.board .icon { width: 40px; height: 40px; }
+  .grid.board .icon svg { width: 21px; height: 21px; }
+  .grid.board .text { flex: none; width: 100%; }
+  .grid.board .name {
     display: -webkit-box;
-    font-size: 0.62rem;
+    font-size: 0.66rem;
     line-height: 1.15;
     letter-spacing: 0;
     white-space: normal;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
   }
-  .editing .board .blurb,
-  .editing .board .stat,
-  .editing .board .deco,
+  .grid.board .blurb,
+  .grid.board .stat,
+  .grid.board .deco { display: none; }
+  .grid.board .slot { min-height: 0; aspect-ratio: 1; font-size: 0.66rem; }
+
+  /* editing that board: tap to pick, tap to place; ✕ badges on the corners */
   .editing .board .move .grip,
   .editing .board .move [data-move] { display: none; }
   .editing .board .move { top: -7px; right: -7px; transform: none; }
   .editing .board .move .hide { width: 22px; height: 22px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); }
   .editing .board .move .hide svg { width: 12px; height: 12px; }
-  .editing .board .slot { min-height: 0; aspect-ratio: 1; font-size: 0.66rem; }
-  .editing .board .tile.picked .tile-link { outline-offset: 2px; }
+  .editing .grid.board .tile-link { padding: 8px 6px; }
 }
 
 /* ---------- footer ---------- */
@@ -972,8 +1019,8 @@ body.picking .tray-label { border-color: var(--focus); color: var(--ink); }
 @media (max-width: 699px) {
   [data-skin="bauhaus"] .grid .tile-link { --u: 0.56px; }
   [data-skin="bauhaus"] .deco { top: 50%; right: 14px; transform: translateY(-50%); }
-  [data-skin="bauhaus"] body:not(.editing) .grid .tile-link { padding-right: 66px; }
-  [data-skin="bauhaus"] .grid .name { font-size: 0.92rem; letter-spacing: 0.035em; }
+  [data-skin="bauhaus"] body:not(.editing) .grid:not(.board) .tile-link { padding-right: 66px; }
+  [data-skin="bauhaus"] .grid:not(.board) .name { font-size: 0.92rem; letter-spacing: 0.035em; }
 }
 [data-skin="bauhaus"] .brand-mark i:nth-child(1) { width: 30px; height: 30px; left: 0; top: 0; border-radius: 50%; background: var(--b1, #d23a2b); }
 [data-skin="bauhaus"] .brand-mark i:nth-child(2) { width: 26px; height: 26px; right: 0; bottom: 0; background: var(--b2, #1f4f96); }

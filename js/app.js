@@ -11,10 +11,12 @@
     look: "jens_launchpad:look",
     repos: "jens_launchpad:repos",
     prefsAt: "jens_launchpad:prefs-at",
-    layout: "jens_launchpad:layout"
+    layout: "jens_launchpad:layout", // single layout from before named layouts (migrated)
+    layouts: "jens_launchpad:layouts",
+    layoutUse: "jens_launchpad:layout-use" // which layout this device shows; not synced
   };
   // Settings that follow you across devices when signed in (last change wins).
-  var PREF_KEYS = [KEY.order, KEY.hidden, KEY.look, KEY.skin, KEY.layout];
+  var PREF_KEYS = [KEY.hidden, KEY.look, KEY.skin, KEY.layouts];
   var SELF_REPO = "jens_launchpad";
   var OWNER = window.GITHUB_USER || "";
   var WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
@@ -91,7 +93,7 @@
 
   // Full order of every known project, including the ones in the box.
   function fullOrder() {
-    var ids = loadList(KEY.order).filter(function (id) { return byId[id]; });
+    var ids = (layout.order || []).filter(function (id) { return byId[id]; });
     projects.forEach(function (p) { if (ids.indexOf(p.id) < 0) ids.push(p.id); });
     return ids;
   }
@@ -108,8 +110,9 @@
     var dom = tiles().map(function (t) { return t.dataset.id; });
     var h = hiddenIds();
     var next = fullOrder().map(function (id) { return h.indexOf(id) >= 0 ? id : dom.shift(); });
-    loadList(KEY.order).forEach(function (id) { if (!byId[id] && next.indexOf(id) < 0) next.push(id); });
-    save(KEY.order, next.filter(Boolean));
+    (layout.order || []).forEach(function (id) { if (!byId[id] && next.indexOf(id) < 0) next.push(id); });
+    layout.order = next.filter(Boolean);
+    saveLayout();
   }
 
   // ---------- open counts ----------
@@ -219,6 +222,7 @@
   }
 
   function renderGrid() {
+    pickLayout();
     var board = layout.mode === "grid";
     grid.classList.toggle("board", board);
     grid.style.setProperty("--cols", layout.cols);
@@ -234,15 +238,47 @@
   // layout.cells holds a project id (or null) per square, row by row. Projects
   // not on the board sit in the tray underneath; new ones take the first free square.
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
-  function loadLayout() {
-    var l = load(KEY.layout, null) || {};
+  // ---------- named layouts (like Groundwork) ----------
+  // Layouts are shared by every device (and synced); each device picks which
+  // one it shows, so a phone and a desktop can differ. Each layout has its own
+  // mode, order (for Auto) and board (for Custom grid). The box and look are shared.
+  var MAX_LAYOUTS = 8;
+  function normLayout(l, i) {
+    l = l || {};
     var cols = clamp(parseInt(l.cols, 10) || 4, 1, 6), rows = clamp(parseInt(l.rows, 10) || 4, 1, 12);
     var cells = Array.isArray(l.cells) ? l.cells.slice(0, cols * rows) : [];
     while (cells.length < cols * rows) cells.push(null);
-    return { mode: l.mode === "grid" ? "grid" : "auto", cols: cols, rows: rows, cells: cells, seen: Array.isArray(l.seen) ? l.seen : [] };
+    return {
+      id: String(l.id || "l" + i),
+      name: String(l.name || (i ? "Layout " + (i + 1) : "Main")).slice(0, 40),
+      mode: l.mode === "grid" ? "grid" : "auto",
+      cols: cols, rows: rows, cells: cells,
+      seen: Array.isArray(l.seen) ? l.seen : [],
+      order: Array.isArray(l.order) ? l.order : []
+    };
   }
-  var layout = loadLayout();
-  function saveLayout() { save(KEY.layout, layout); }
+  // Builds the list, turning an older single layout (+ order) into "Main".
+  function layoutsFrom(list, legacyLayout, legacyOrder) {
+    if (!Array.isArray(list) || !list.length) {
+      list = [Object.assign({}, legacyLayout || {}, { id: "main", name: "Main", order: Array.isArray(legacyOrder) ? legacyOrder : [] })];
+    }
+    var ids = {};
+    return list.slice(0, MAX_LAYOUTS).map(normLayout).filter(function (l) {
+      if (ids[l.id]) return false;
+      ids[l.id] = true;
+      return true;
+    });
+  }
+  var layouts = layoutsFrom(load(KEY.layouts, null), load(KEY.layout, null), loadList(KEY.order));
+  var editId = null; // the layout open in Customize (may differ from this device's)
+  function findLayout(id) {
+    for (var i = 0; i < layouts.length; i++) if (layouts[i].id === id) return layouts[i];
+    return null;
+  }
+  function deviceLayout() { return findLayout(load(KEY.layoutUse, null)) || layouts[0]; }
+  var layout = deviceLayout();
+  function pickLayout() { layout = (editing && findLayout(editId)) || deviceLayout(); }
+  function saveLayout() { save(KEY.layouts, layouts); }
 
   function isFree(i) {
     var id = layout.cells[i];
@@ -357,7 +393,23 @@
   var layoutBar = document.getElementById("layoutBar");
   function renderLayoutBar() {
     var g = layout.mode === "grid";
-    var html = '<div class="seg" role="radiogroup" aria-label="Layout">' +
+    var mine = deviceLayout().id;
+    var html = '<div class="layout-tabs" role="tablist" aria-label="Layouts">' +
+      layouts.map(function (l) {
+        return '<button type="button" role="tab" data-tab="' + esc(l.id) + '" aria-selected="' + (l.id === layout.id) + '">' +
+          '<span class="tab-name">' + esc(l.name) + "</span>" + (l.id === mine ? '<span class="tab-badge">this device</span>' : "") + "</button>";
+      }).join("") +
+      (layouts.length < MAX_LAYOUTS ? '<button type="button" class="tab-new" data-new-layout>+ New layout</button>' : "") +
+      "</div>";
+    html += '<div class="layout-row">' +
+      '<label class="name-field"><span>Name</span><input type="text" maxlength="40" data-layout-name value="' + esc(layout.name) + '"></label>' +
+      (layout.id === mine
+        ? '<span class="use-note">✓ Shown on this device</span>'
+        : '<button type="button" class="btn small" data-use-layout>Use on this device</button>') +
+      (layouts.length > 1 ? '<button type="button" class="btn ghost small" data-delete-layout>Delete layout</button>' : "") +
+      "</div>";
+    html += '<div class="layout-row">';
+    html += '<div class="seg" role="radiogroup" aria-label="Layout">' +
       [["auto", "Auto"], ["grid", "Custom grid"]].map(function (o) {
         return '<button type="button" role="radio" data-layout="' + o[0] + '" aria-checked="' + (layout.mode === o[0]) + '">' + o[1] + "</button>";
       }).join("") + "</div>";
@@ -367,6 +419,7 @@
     } else {
       html += '<button type="button" class="btn ghost small" id="resetOrder">Reset order</button>';
     }
+    html += "</div>";
     layoutBar.innerHTML = html;
     document.getElementById("editHint").innerHTML = g
       ? '<span class="hint-drag">Drag a tile onto any square, or click a tile and then a square.</span>' +
@@ -402,8 +455,47 @@
       flipById(renderBoard);
     } else if (b.id === "resetOrder") {
       resetOrder();
+    } else if (b.dataset.tab) {
+      editId = b.dataset.tab;
+      picked = null;
+      render();
+      focusLayoutBar('[data-tab="' + CSS.escape(editId) + '"]');
+    } else if (b.hasAttribute("data-new-layout")) {
+      // A new layout starts as a copy of the one being edited.
+      var copy = JSON.parse(JSON.stringify(layout));
+      copy.id = "l" + Date.now().toString(36);
+      copy.name = "Layout " + (layouts.length + 1);
+      layouts.push(copy);
+      editId = copy.id;
+      saveLayout();
+      render();
+      var nameInput = layoutBar.querySelector("[data-layout-name]");
+      if (nameInput) { nameInput.focus(); nameInput.select(); }
+    } else if (b.hasAttribute("data-use-layout")) {
+      save(KEY.layoutUse, layout.id);
+      renderLayoutBar();
+      focusLayoutBar(".use-note");
+    } else if (b.hasAttribute("data-delete-layout")) {
+      if (layouts.length < 2 || !window.confirm('Delete the layout "' + layout.name + '"? Devices using it will switch to another layout.')) return;
+      layouts = layouts.filter(function (l) { return l !== layout; });
+      saveLayout();
+      editId = deviceLayout().id;
+      picked = null;
+      render();
+      focusLayoutBar('[aria-selected="true"]');
     }
   });
+  layoutBar.addEventListener("input", function (e) {
+    if (!e.target.hasAttribute("data-layout-name")) return;
+    layout.name = e.target.value.slice(0, 40);
+    var tab = layoutBar.querySelector('[data-tab="' + CSS.escape(layout.id) + '"] .tab-name');
+    if (tab) tab.textContent = layout.name || "Untitled";
+    saveLayout();
+  });
+  function focusLayoutBar(sel) {
+    var el = layoutBar.querySelector(sel);
+    if (el) { if (!el.hasAttribute("tabindex") && el.tagName === "SPAN") el.tabIndex = -1; el.focus(); }
+  }
 
   function renderBox() {
     var ids = fullOrder().filter(isHidden);
@@ -656,11 +748,10 @@
     editPanel.hidden = !on;
     doneFab.hidden = !on;
     if (on) { lookPanel.open = wide.matches; renderLook(); }
+    editId = on ? deviceLayout().id : null;
     if (!on && picked) { picked = null; tiles().forEach(function (t) { t.classList.remove("picked"); }); document.body.classList.remove("picking"); }
-    tiles().forEach(function (t) {
-      var a = t.querySelector(".tile-link");
-      if (on) a.tabIndex = -1; else a.removeAttribute("tabindex");
-    });
+    // Re-render: Customize may have been showing a different layout than this device's.
+    render();
   }
   customizeBtn.addEventListener("click", function () { setEditing(!editing); });
   doneFab.addEventListener("click", function () { setEditing(false); customizeBtn.focus(); });
@@ -669,7 +760,8 @@
   });
 
   function resetOrder() {
-    save(KEY.order, []);
+    layout.order = [];
+    saveLayout();
     var want = visibleIds();
     flip(function () {
       var map = {};
@@ -973,7 +1065,7 @@
   // newer copy from another device when one arrives.
   var pushTimer = 0;
   function prefsSnapshot() {
-    return { order: loadList(KEY.order), hidden: hiddenIds(), look: look, skin: currentSkin(), layout: layout };
+    return { hidden: hiddenIds(), look: look, skin: currentSkin(), layouts: layouts };
   }
   function prefsChanged() {
     save(KEY.prefsAt, Date.now());
@@ -986,11 +1078,16 @@
   function applyRemotePrefs(p, at) {
     if (drag) { pendingRemote = [p, at]; return; }
     applyingRemote = true;
-    if (Array.isArray(p.order)) save(KEY.order, p.order);
     if (Array.isArray(p.hidden)) save(KEY.hidden, p.hidden);
     if (p.look) { look = normalizeLook(p.look); save(KEY.look, look); }
     if (p.skin && DEFAULT_LOOK[p.skin]) { root.dataset.skin = p.skin; save(KEY.skin, p.skin); }
-    if (p.layout) { save(KEY.layout, p.layout); layout = loadLayout(); picked = null; }
+    if (p.layouts || p.layout || p.order) {
+      layouts = layoutsFrom(p.layouts, p.layout, p.order);
+      save(KEY.layouts, layouts);
+      if (editing && !findLayout(editId)) editId = deviceLayout().id;
+      pickLayout();
+      picked = null;
+    }
     save(KEY.prefsAt, at);
     applyingRemote = false;
     applyLook();
