@@ -1,12 +1,13 @@
 /* =========================================================
-   Sync: launch counts across devices
+   Sync: launch counts and settings across devices
 
    Optional sign-in (Google or GitHub) through the shared Firebase project
    `github-projects-5d4e4`, the same one Groundwork uses. Each account gets one
-   document, launchpad/{uid}, holding { opens: { projectId: [timestamps] } }.
-
-   Opens are only ever added, so merging two devices is a simple union of
-   timestamps; nothing can be overwritten. Every device also keeps its own
+   document, launchpad/{uid}:
+       opens:   { projectId: [timestamps] }   merged by union, never overwritten
+       prefs:   { order, hidden, look, skin } the most recent change wins
+       prefsAt: when prefs last changed (ms)
+ Every device also keeps its own
    copy in localStorage, so the page works signed out or offline and catches
    the account up next time it loads.
 
@@ -115,24 +116,34 @@
         set("loading");
         docRef = fb.firestore().collection(COLLECTION).doc(user.uid);
         var ref = docRef;
-        // Pull the account's opens, fold in this device's, and write the union back.
+        // Pull the account's copy, fold in this device's, and write the result back.
+        // Opens are unioned; for settings, whichever side changed last wins.
         fb.firestore().runTransaction(function (tx) {
           return tx.get(ref).then(function (snap) {
-            var remote = snap.exists ? (snap.data().opens || {}) : {};
-            var merged = merge(remote, hooks.getLocal());
-            tx.set(ref, { opens: merged, updated: fb.firestore.FieldValue.serverTimestamp() });
-            return merged;
+            var data = snap.exists ? snap.data() : {};
+            var merged = merge(data.opens || {}, hooks.getLocal());
+            var local = hooks.getPrefs();
+            var remoteAt = data.prefsAt || 0;
+            var takeRemote = !!data.prefs && remoteAt > local.at;
+            var doc = { opens: merged, updated: fb.firestore.FieldValue.serverTimestamp() };
+            if (takeRemote) { doc.prefs = data.prefs; doc.prefsAt = remoteAt; }
+            else { doc.prefs = JSON.parse(JSON.stringify(local.prefs)); doc.prefsAt = local.at || Date.now(); }
+            tx.set(ref, doc);
+            return { opens: merged, prefs: takeRemote ? data.prefs : null, at: remoteAt };
           });
-        }).then(function (merged) {
+        }).then(function (res) {
           if (ref !== docRef) return;
-          hooks.setLocal(merged);
+          hooks.setLocal(res.opens);
+          if (res.prefs) hooks.setPrefs(res.prefs, res.at);
           set("in");
           // Live: opens made on another device show up here straight away.
           unsubscribe = ref.onSnapshot(function (snap) {
             if (!snap.exists) return;
+            var data = snap.data();
             var local = hooks.getLocal();
-            var next = merge(local, snap.data().opens || {});
+            var next = merge(local, data.opens || {});
             if (!sameOpens(next, local)) hooks.setLocal(next);
+            if (data.prefs && (data.prefsAt || 0) > hooks.getPrefs().at) hooks.setPrefs(data.prefs, data.prefsAt);
           }, function (e) { set("error", reason(e)); });
         }).catch(function (e) { set("error", reason(e)); });
       });
@@ -181,6 +192,11 @@
       var patch = { opens: {} };
       patch.opens[id] = window.firebase.firestore.FieldValue.arrayUnion(t);
       docRef.set(patch, { merge: true }).catch(function () {});
+    },
+    // Replace the account's settings with this device's.
+    pushPrefs: function (prefs, at) {
+      if (state.status !== "in" || !docRef) return;
+      docRef.update({ prefs: JSON.parse(JSON.stringify(prefs)), prefsAt: at }).catch(function () {});
     }
   };
 })();

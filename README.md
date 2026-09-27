@@ -24,10 +24,10 @@ Plain HTML/CSS/JS with no build step, so it deploys straight to GitHub Pages.
     Each style has its own editable five-colour palette. Mist tints the icons,
     Prism colours its shapes, Brutal fills the tiles, and Bauhaus colours a small
     square composition. Prism and Bauhaus also have patterns A, B and C.
-  - **Sync**: sign in to count launches across all your devices (see below).
+  - **Sync**: sign in to share launch counts and settings across all your devices (see below).
 
-Order, box and look are saved in this browser's localStorage, so each device
-keeps its own setup. Keys are prefixed `jens_launchpad:` because every project on
+Order, box and look are saved in this browser's localStorage, and also in your
+account when you're signed in. Keys are prefixed `jens_launchpad:` because every project on
 `jkw2lo.github.io` shares the same storage. You can link to a style directly with `?skin=brutal`.
 
 ## New projects
@@ -46,13 +46,18 @@ To give a project a nicer name, blurb, icon or type, add it to
 `icon` is one of the keys in `ICONS` in the same file, and `cat` is one of the
 `CATEGORIES`. Keep blurbs under about 25 characters so they fit on one line.
 
-## Sync (launch counts across devices)
+## Sync (launch counts and settings across devices)
 
 Sign in under Customize → Sync with Google or GitHub. This uses the shared Firebase
 project **`github-projects-5d4e4`**, the same one as Groundwork (config in
-`js/sync.js`). Each account has one document, `launchpad/{uid}`, holding
-the open timestamps. Devices merge by union, so nothing gets overwritten, and
-opens made while signed out are added the next time you sign in.
+`js/sync.js`). Each account has one document, `launchpad/{uid}`:
+
+- **Launch counts** merge by union, so nothing is overwritten. Launches made while
+  signed out are added the next time you sign in.
+- **Settings** (order, the box, style, colours and patterns) follow the most
+  recent change. Change something on one device and the others update live.
+  When a device signs in for the first time, it takes the account's settings,
+  unless it was customised more recently than the account.
 
 **One-time setup:** add this rule in the Firebase console → Firestore Database →
 Rules, next to the existing `groundwork` rule, then Publish:

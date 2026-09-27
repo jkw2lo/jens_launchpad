@@ -9,8 +9,11 @@
     opens: "jens_launchpad:opens",
     skin: "jens_launchpad:skin",
     look: "jens_launchpad:look",
-    repos: "jens_launchpad:repos"
+    repos: "jens_launchpad:repos",
+    prefsAt: "jens_launchpad:prefs-at"
   };
+  // Settings that follow you across devices when signed in (last change wins).
+  var PREF_KEYS = [KEY.order, KEY.hidden, KEY.look, KEY.skin];
   var SELF_REPO = "jens_launchpad";
   var OWNER = window.GITHUB_USER || "";
   var WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
@@ -60,8 +63,10 @@
       return v == null ? fallback : JSON.parse(v);
     } catch (e) { return fallback; }
   }
+  var applyingRemote = false;
   function save(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+    if (!applyingRemote && PREF_KEYS.indexOf(key) >= 0) prefsChanged();
   }
   function loadList(key) {
     var v = load(key, []);
@@ -251,8 +256,8 @@
   function renderFoot() {
     var signedIn = window.LaunchpadSync && LaunchpadSync.state.status === "in";
     document.getElementById("foot").textContent = signedIn
-      ? "Launch counts cover the last 30 days, across every device you've signed in on."
-      : "Launch counts cover the last 30 days on this device. Sign in under Customize to count every device.";
+      ? "Launch counts cover the last 30 days. Counts and settings are synced across your signed-in devices."
+      : "Launch counts cover the last 30 days on this device. Sign in under Customize to sync every device.";
   }
 
   function renderLegend() {
@@ -273,8 +278,9 @@
   }
 
   // ---------- look (skin, colours, patterns) ----------
-  var look = (function () {
-    var saved = load(KEY.look, {}) || {};
+  var look = normalizeLook(load(KEY.look, {}));
+  function normalizeLook(saved) {
+    saved = saved || {};
     var out = { mode: MODES.some(function (m) { return m[0] === saved.mode; }) ? saved.mode : DEFAULT_LOOK.mode };
     SKINS.forEach(function (s) {
       var d = DEFAULT_LOOK[s.id], v = saved[s.id] || {};
@@ -286,7 +292,7 @@
       out[s.id] = o;
     });
     return out;
-  })();
+  }
   function currentSkin() {
     var s = root.dataset.skin;
     return DEFAULT_LOOK[s] ? s : "mist";
@@ -618,6 +624,7 @@
       t.animate([{ transform: from }, { transform: "none" }], { duration: 200, easing: "cubic-bezier(.2,.8,.2,1)" });
     }
     saveOrderFromDom();
+    if (pendingRemote) { var pr = pendingRemote; pendingRemote = null; applyRemotePrefs(pr[0], pr[1]); }
   }
   window.addEventListener("pointermove", onMove, { passive: false });
   window.addEventListener("pointerup", onUp);
@@ -665,7 +672,7 @@
     var st = LaunchpadSync.state, html = "";
     if (st.status === "in") {
       var who = st.user && (st.user.email || st.user.name) || "your account";
-      html = '<p class="account-line"><span class="dot on" aria-hidden="true"></span>Signed in as <b>' + esc(who) + "</b>. Launch counts are shared across every device signed in to this account.</p>" +
+      html = '<p class="account-line"><span class="dot on" aria-hidden="true"></span>Signed in as <b>' + esc(who) + "</b>. Launch counts, order, the box and your look follow you to every device signed in to this account.</p>" +
         '<div class="account-actions"><button type="button" class="btn ghost small" data-signout>Sign out</button>' +
         '<span class="account-note">Signing out here also signs Groundwork out on this device.</span></div>';
     } else if (st.status === "loading") {
@@ -688,6 +695,34 @@
     else if (b.hasAttribute("data-signout")) LaunchpadSync.signOut();
   });
 
+  // Settings sync: stamp every local change, push it (batched), and take a
+  // newer copy from another device when one arrives.
+  var pushTimer = 0;
+  function prefsSnapshot() {
+    return { order: loadList(KEY.order), hidden: hiddenIds(), look: look, skin: currentSkin() };
+  }
+  function prefsChanged() {
+    save(KEY.prefsAt, Date.now());
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(function () {
+      if (window.LaunchpadSync) LaunchpadSync.pushPrefs(prefsSnapshot(), load(KEY.prefsAt, 0));
+    }, 600);
+  }
+  var pendingRemote = null;
+  function applyRemotePrefs(p, at) {
+    if (drag) { pendingRemote = [p, at]; return; }
+    applyingRemote = true;
+    if (Array.isArray(p.order)) save(KEY.order, p.order);
+    if (Array.isArray(p.hidden)) save(KEY.hidden, p.hidden);
+    if (p.look) { look = normalizeLook(p.look); save(KEY.look, look); }
+    if (p.skin && DEFAULT_LOOK[p.skin]) { root.dataset.skin = p.skin; save(KEY.skin, p.skin); }
+    save(KEY.prefsAt, at);
+    applyingRemote = false;
+    applyLook();
+    render();
+    if (editing) renderLook();
+  }
+
   // ---------- go ----------
   var urlSkin = null;
   try { urlSkin = new URLSearchParams(location.search).get("skin"); } catch (e) {}
@@ -698,6 +733,8 @@
   LaunchpadSync.init({
     change: function () { renderAccount(); renderFoot(); },
     getLocal: recentOpens,
-    setLocal: function (opens) { save(KEY.opens, opens); renderStats(); }
+    setLocal: function (opens) { save(KEY.opens, opens); renderStats(); },
+    getPrefs: function () { return { prefs: prefsSnapshot(), at: load(KEY.prefsAt, 0) || 0 }; },
+    setPrefs: applyRemotePrefs
   });
 })();
