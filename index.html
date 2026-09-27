@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Jost:wght@400;500;700&family=Manrope:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=202609271816">
+  <link rel="stylesheet" href="css/styles.css?v=202609271828">
   <style id="lookStyle"></style>
 </head>
 <body>
@@ -51,14 +51,6 @@
         <div class="look-body" id="lookBody"></div>
       </details>
 
-      <div class="panel box" id="box">
-        <div class="box-head">
-          <span class="panel-title">The box</span>
-          <span class="panel-note" id="boxNote"></span>
-        </div>
-        <ul class="box-items" id="boxItems"></ul>
-      </div>
-
       <div class="panel account" id="account">
         <div class="box-head">
           <span class="panel-title">Sync</span>
@@ -76,16 +68,29 @@
       </div>
     </section>
 
-    <ul class="grid" id="grid" aria-label="Projects"></ul>
+    <div class="stage">
+      <ul class="grid" id="grid" aria-label="Projects"></ul>
+
+      <!-- While customizing, the box docks beside the grid (desktop) or along the bottom (phone). -->
+      <aside class="dock" id="dock" hidden aria-label="The box">
+        <div class="panel box" id="box">
+          <div class="box-head">
+            <span class="panel-title">The box <span class="box-count" id="boxCount"></span></span>
+            <span class="panel-note" id="boxNote"></span>
+          </div>
+          <ul class="box-items" id="boxItems"></ul>
+        </div>
+        <button type="button" class="btn primary dock-done" id="doneFab">Done</button>
+      </aside>
+    </div>
 
     <footer class="foot" id="foot"></footer>
   </div>
 
-  <button type="button" class="btn primary done-fab" id="doneFab" hidden>Done</button>
 
-  <script src="js/projects.js?v=202609271816"></script>
-  <script src="js/sync.js?v=202609271816"></script>
-  <script src="js/app.js?v=202609271816"></script>
+  <script src="js/projects.js?v=202609271828"></script>
+  <script src="js/sync.js?v=202609271828"></script>
+  <script src="js/app.js?v=202609271828"></script>
   <script>
     // Safety net: if the app couldn't start (say, a half-updated cache), still show the links.
     (function () {

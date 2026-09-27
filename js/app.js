@@ -56,6 +56,8 @@
   var boxItems = document.getElementById("boxItems");
   var boxNote = document.getElementById("boxNote");
   var doneFab = document.getElementById("doneFab");
+  var dock = document.getElementById("dock");
+  var boxCount = document.getElementById("boxCount");
   var lookStyle = document.getElementById("lookStyle");
   var root = document.documentElement;
   var editing = false;
@@ -338,7 +340,7 @@
     grid.innerHTML = html;
     if (picked) {
       var t = grid.querySelector('.tile[data-id="' + CSS.escape(picked) + '"]');
-      if (t) t.classList.add("picked"); else picked = null;
+      if (t) t.classList.add("picked"); else if (!isHidden(picked)) picked = null;
     }
     document.body.classList.toggle("picking", !!picked);
   }
@@ -380,7 +382,21 @@
   function boardTap(el) {
     if (el.classList.contains("tile") && !picked) { picked = el.dataset.id; }
     else if (el.classList.contains("tile") && picked === el.dataset.id) { picked = null; }
-    else if (picked) { var id = picked; picked = null; placeAt(id, el); return; }
+    else if (picked) {
+      var id = picked;
+      picked = null;
+      if (isHidden(id)) {
+        save(KEY.hidden, hiddenIds().filter(function (x) { return x !== id; }));
+        layout.seen.indexOf(id) < 0 && layout.seen.push(id);
+        if (layout.cells.indexOf(id) < 0 && (el.hasAttribute("data-tray") || el.dataset.cell == null)) { saveLayout(); flipById(renderBoard); }
+        else placeAt(id, el);
+        renderBox();
+        renderLegend();
+        return;
+      }
+      placeAt(id, el);
+      return;
+    }
     else return;
     tiles().forEach(function (t) { t.classList.toggle("picked", t.dataset.id === picked); });
     document.body.classList.toggle("picking", !!picked);
@@ -509,14 +525,16 @@
     boxItems.innerHTML = ids.length
       ? ids.map(function (id) {
           var p = byId[id];
-          return '<li><button type="button" class="chip" data-show="' + esc(id) + '" aria-label="Add ' + esc(p.name) + ' to the launchpad">' +
+          return '<li><button type="button" class="chip' + (picked === id ? " picked" : "") + '" data-show="' + esc(id) + '" aria-pressed="' + (picked === id) + '"' +
+            ' aria-label="' + (layout.mode === "grid" ? "Pick " + esc(p.name) + ", then choose a square" : "Add " + esc(p.name) + " to the launchpad") + '">' +
             '<span class="chip-icon">' + icon(p.icon) + '</span><span class="chip-name">' + esc(p.name) + "</span>" +
             '<span class="chip-plus">' + SVG.plus + "</span></button></li>";
         }).join("")
-      : '<li class="box-empty">Empty. Every project is on your launchpad.</li>';
-    boxNote.textContent = ids.length
-      ? ids.length + (ids.length === 1 ? " project" : " projects") + " tucked away · tap to add back"
-      : "";
+      : '<li class="box-empty">Empty. Drop a tile here, or tap its <b>✕</b>, to tuck it away.</li>';
+    boxCount.textContent = ids.length ? "· " + ids.length : "";
+    boxNote.textContent = !ids.length ? ""
+      : layout.mode === "grid" ? "Tap one, then tap a square to place it."
+      : "Tap one to add it back.";
   }
 
   function renderStats() {
@@ -753,10 +771,10 @@
     customizeBtn.querySelector(".label").textContent = on ? "Done" : "Customize";
     customizeBtn.setAttribute("aria-label", on ? "Done customizing" : "Customize");
     editPanel.hidden = !on;
-    doneFab.hidden = !on;
+    dock.hidden = !on;
     if (on) { lookPanel.open = wide.matches; renderLook(); }
     editId = on ? deviceLayout().id : null;
-    if (!on && picked) { picked = null; tiles().forEach(function (t) { t.classList.remove("picked"); }); document.body.classList.remove("picking"); }
+    if (!on && picked) { picked = null; document.body.classList.remove("picking"); }
     // Re-render: Customize may have been showing a different layout than this device's.
     render();
   }
@@ -797,10 +815,27 @@
     var focusTarget = next && next.querySelector("[data-hide]");
     if (focusTarget) focusTarget.focus();
   }
+  dock.addEventListener("click", function (e) {
+    if (e.target.closest("[data-show], button") || !picked || isHidden(picked)) return;
+    var t = grid.querySelector('.tile[data-id="' + CSS.escape(picked) + '"]');
+    picked = null;
+    document.body.classList.remove("picking");
+    if (t) hideProject(t);
+  });
   boxItems.addEventListener("click", function (e) {
     var chip = e.target.closest("[data-show]");
     if (!chip) return;
     var id = chip.dataset.show;
+    if (layout.mode === "grid") {
+      // Pick it up; the next square tapped is where it goes.
+      picked = picked === id ? null : id;
+      tiles().forEach(function (t) { t.classList.remove("picked"); });
+      document.body.classList.toggle("picking", !!picked);
+      renderBox();
+      var again = boxItems.querySelector('[data-show="' + CSS.escape(id) + '"]');
+      if (again) again.focus();
+      return;
+    }
     save(KEY.hidden, hiddenIds().filter(function (x) { return x !== id; }));
     if (layout.mode === "grid") {
       // On the board it takes the first free square, or waits in the tray.
@@ -901,7 +936,17 @@
     follow();
     track();
   }
-  function track() { if (layout.mode === "grid") markDrop(); else swapUnderPointer(); }
+  function overDock() {
+    var r = dock.getBoundingClientRect();
+    return !dock.hidden && r.width > 0 && drag.x >= r.left && drag.x <= r.right && drag.y >= r.top && drag.y <= r.bottom;
+  }
+  function track() {
+    var inDock = overDock();
+    dock.classList.toggle("drop-target", inDock);
+    drag.toBox = inDock;
+    if (inDock) { if (drag.over) { drag.over.classList.remove("drop-target"); drag.over = null; } return; }
+    if (layout.mode === "grid") markDrop(); else swapUnderPointer();
+  }
 
   function dropUnderPointer() {
     var g = grid.getBoundingClientRect();
@@ -966,6 +1011,17 @@
     justDragged = true;
     setTimeout(function () { justDragged = false; }, 0);
     var t = d.tile;
+    dock.classList.remove("drop-target");
+    if (d.toBox) {
+      // Dropped on the box: tuck it away.
+      if (d.over) d.over.classList.remove("drop-target");
+      t.style.transform = "";
+      t.classList.remove("dragging");
+      document.body.classList.remove("is-dragging");
+      if (layout.mode !== "grid") saveOrderFromDom();
+      hideProject(t);
+      return;
+    }
     if (layout.mode === "grid") {
       if (d.over) d.over.classList.remove("drop-target");
       t.classList.remove("dragging");

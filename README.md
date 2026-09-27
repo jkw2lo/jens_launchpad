@@ -26,7 +26,11 @@ Plain HTML/CSS/JS with no build step, so it deploys straight to GitHub Pages.
     (**Use on this device**, remembered by that browser), so a phone can show a
     compact "Phone" grid while the desktop shows "Main". Up to 8 layouts.
   - **The box**: ✕ puts a project back in the box, where nothing is lost.
-    Tap it in the box to bring it back to the spot it came from.
+    While customizing, the box is docked beside the grid on wide screens, pinned
+    so it follows you down the page, or along the bottom on phones and tablets,
+    next to Done. Drag a tile onto it to put it away. With Auto, tap a boxed
+    project to bring it back to its old spot. With Custom grid, tap it and then
+    tap the square it should go in.
   - **Look**: pick a style, then choose how projects are coloured. The
     choice applies to every style:
     - **By type**: one colour per project type (Languages, Planning, Home, Making, More), with a colour key under the title (you can hide it).
