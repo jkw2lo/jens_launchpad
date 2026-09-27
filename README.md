@@ -12,7 +12,13 @@ Plain HTML/CSS/JS with no build step, so it deploys straight to GitHub Pages.
 - **Open counts**: each tile shows how many times you opened it in the last
   30 days and when you last did.
 - **Customize** (the sliders button) contains everything else:
-  - **Reorder**: drag tiles (on a phone, drag the ⠿ handle) or use the arrows.
+  - **Layout**: *Auto* fills rows left to right. Drag tiles to reorder (on a
+    phone, drag the ⠿ handle), or use the arrows. *Custom grid* is a board of
+    columns × rows, like Groundwork's. Drag a tile onto any square, or tap a tile
+    and then a square. Dropping onto a taken square swaps the two. Empty squares
+    stay empty on the page. Projects not on the board wait in the tray underneath,
+    and new projects take the first free square. On a phone the board edits as a
+    compact grid of small squares and displays as a list in reading order.
   - **The box**: ✕ puts a project back in the box, where nothing is lost.
     Tap it in the box to bring it back to the spot it came from.
   - **Look**: pick a style, then choose how projects are coloured. The
@@ -54,7 +60,7 @@ project **`github-projects-5d4e4`**, the same one as Groundwork (config in
 
 - **Launch counts** merge by union, so nothing is overwritten. Launches made while
   signed out are added the next time you sign in.
-- **Settings** (order, the box, style, colours and patterns) follow the most
+- **Settings** (order, board layout, the box, style, colours and patterns) follow the most
   recent change. Change something on one device and the others update live.
   When a device signs in for the first time, it takes the account's settings,
   unless it was customised more recently than the account.

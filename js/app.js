@@ -10,10 +10,11 @@
     skin: "jens_launchpad:skin",
     look: "jens_launchpad:look",
     repos: "jens_launchpad:repos",
-    prefsAt: "jens_launchpad:prefs-at"
+    prefsAt: "jens_launchpad:prefs-at",
+    layout: "jens_launchpad:layout"
   };
   // Settings that follow you across devices when signed in (last change wins).
-  var PREF_KEYS = [KEY.order, KEY.hidden, KEY.look, KEY.skin];
+  var PREF_KEYS = [KEY.order, KEY.hidden, KEY.look, KEY.skin, KEY.layout];
   var SELF_REPO = "jens_launchpad";
   var OWNER = window.GITHUB_USER || "";
   var WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
@@ -100,7 +101,7 @@
     var h = hiddenIds();
     return fullOrder().filter(function (id) { return h.indexOf(id) < 0; });
   }
-  function tiles() { return Array.prototype.slice.call(grid.children); }
+  function tiles() { return Array.prototype.slice.call(grid.querySelectorAll(":scope > .tile")); }
 
   // Save the on-screen order, keeping boxed projects in the slot they came from.
   function saveOrderFromDom() {
@@ -170,9 +171,10 @@
   }
 
   // ---------- rendering ----------
-  function tileHtml(p) {
+  function tileHtml(p, cell) {
     return (
-      '<li class="tile" data-id="' + esc(p.id) + '" data-cat="' + esc(p.cat) + '"' + tileVars(p) + ">" +
+      '<li class="tile" data-id="' + esc(p.id) + '" data-cat="' + esc(p.cat) + '"' +
+      (cell != null ? ' data-cell="' + cell + '"' : "") + tileVars(p) + ">" +
         '<a class="tile-link" href="' + esc(p.url) + '" draggable="false"' + (editing ? ' tabindex="-1"' : "") + ">" +
           '<span class="deco" aria-hidden="true"><i class="d1"></i><i class="d2"></i></span>' +
           '<span class="icon">' + icon(p.icon) + "</span>" +
@@ -217,8 +219,191 @@
   }
 
   function renderGrid() {
-    grid.innerHTML = visibleIds().map(function (id) { return tileHtml(byId[id]); }).join("");
+    var board = layout.mode === "grid";
+    grid.classList.toggle("board", board);
+    grid.style.setProperty("--cols", layout.cols);
+    if (!board) {
+      grid.innerHTML = visibleIds().map(function (id) { return tileHtml(byId[id]); }).join("");
+    } else {
+      renderBoard();
+    }
+    renderLayoutBar();
   }
+
+  // ---------- custom grid (a board of squares, like Groundwork) ----------
+  // layout.cells holds a project id (or null) per square, row by row. Projects
+  // not on the board sit in the tray underneath; new ones take the first free square.
+  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+  function loadLayout() {
+    var l = load(KEY.layout, null) || {};
+    var cols = clamp(parseInt(l.cols, 10) || 4, 1, 6), rows = clamp(parseInt(l.rows, 10) || 4, 1, 12);
+    var cells = Array.isArray(l.cells) ? l.cells.slice(0, cols * rows) : [];
+    while (cells.length < cols * rows) cells.push(null);
+    return { mode: l.mode === "grid" ? "grid" : "auto", cols: cols, rows: rows, cells: cells, seen: Array.isArray(l.seen) ? l.seen : [] };
+  }
+  var layout = loadLayout();
+  function saveLayout() { save(KEY.layout, layout); }
+
+  function isFree(i) {
+    var id = layout.cells[i];
+    return !id || !byId[id] || isHidden(id);
+  }
+  function firstFree() {
+    for (var i = 0; i < layout.cells.length; i++) if (isFree(i)) return i;
+    return -1;
+  }
+  // Give new projects a square, and free the squares of boxed ones.
+  function ensureLayout() {
+    var changed = false, h = hiddenIds();
+    layout.cells = layout.cells.map(function (id) {
+      if (id && h.indexOf(id) >= 0) { changed = true; return null; }
+      return id;
+    });
+    visibleIds().forEach(function (id) {
+      if (layout.seen.indexOf(id) >= 0) return;
+      layout.seen.push(id);
+      changed = true;
+      if (layout.cells.indexOf(id) < 0) {
+        var f = firstFree();
+        if (f >= 0) layout.cells[f] = id;
+      }
+    });
+    if (changed) saveLayout();
+  }
+  // First time on the grid: lay the current order out row by row.
+  function startBoard() {
+    var ids = visibleIds();
+    if (layout.cells.some(function (id, i) { return !isFree(i); })) return;
+    layout.rows = clamp(Math.ceil(ids.length / layout.cols), 1, 12);
+    layout.cells = [];
+    for (var i = 0; i < layout.cols * layout.rows; i++) layout.cells.push(ids[i] || null);
+    layout.seen = projects.map(function (p) { return p.id; });
+  }
+
+  function renderBoard() {
+    ensureLayout();
+    var placed = {}, html = "";
+    layout.cells.forEach(function (id, i) {
+      if (!isFree(i)) { placed[id] = true; html += tileHtml(byId[id], i); }
+      else html += '<li class="slot" data-cell="' + i + '"><span>Empty</span></li>';
+    });
+    var tray = visibleIds().filter(function (id) { return !placed[id]; });
+    html += '<li class="tray-label" data-tray>' + (tray.length
+      ? "Not on the board. Drag or tap to place these."
+      : "Drop a tile here to take it off the board.") + "</li>";
+    tray.forEach(function (id) { html += tileHtml(byId[id], null); });
+    grid.innerHTML = html;
+    if (picked) {
+      var t = grid.querySelector('.tile[data-id="' + CSS.escape(picked) + '"]');
+      if (t) t.classList.add("picked"); else picked = null;
+    }
+    document.body.classList.toggle("picking", !!picked);
+  }
+
+  // Move a project onto a square (swapping with whatever is there) or into the tray.
+  function placeAt(id, target) {
+    var from = layout.cells.indexOf(id);
+    if (target.hasAttribute("data-tray") || (target.classList.contains("tile") && target.dataset.cell == null)) {
+      if (from < 0) return;
+      layout.cells[from] = null;
+    } else {
+      var to = +target.dataset.cell;
+      if (to === from) return;
+      var other = isFree(to) ? null : layout.cells[to];
+      layout.cells[to] = id;
+      if (from >= 0) layout.cells[from] = other;
+    }
+    saveLayout();
+    flipById(renderBoard);
+  }
+
+  // Like flip(), but matched by project id so it survives a full re-render.
+  function flipById(mutate) {
+    var before = {};
+    tiles().forEach(function (t) { before[t.dataset.id] = { x: t.offsetLeft, y: t.offsetTop }; });
+    mutate();
+    tiles().forEach(function (t) {
+      var b = before[t.dataset.id];
+      if (!b || !t.animate) return;
+      var dx = b.x - t.offsetLeft, dy = b.y - t.offsetTop;
+      if (dx || dy) t.animate([{ transform: "translate(" + dx + "px," + dy + "px)" }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.2,.8,.2,1)" });
+    });
+    renderStats();
+    if (editing) tiles().forEach(function (t) { t.querySelector(".tile-link").tabIndex = -1; });
+  }
+
+  // Tap a project, then tap a square (or the tray) to put it there.
+  var picked = null;
+  function boardTap(el) {
+    if (el.classList.contains("tile") && !picked) { picked = el.dataset.id; }
+    else if (el.classList.contains("tile") && picked === el.dataset.id) { picked = null; }
+    else if (picked) { var id = picked; picked = null; placeAt(id, el); return; }
+    else return;
+    tiles().forEach(function (t) { t.classList.toggle("picked", t.dataset.id === picked); });
+    document.body.classList.toggle("picking", !!picked);
+  }
+
+  function resizeBoard(cols, rows) {
+    cols = clamp(cols, 1, 6); rows = clamp(rows, 1, 12);
+    var cells = [];
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+      cells.push(r < layout.rows && c < layout.cols ? layout.cells[r * layout.cols + c] : null);
+    }
+    layout.cols = cols; layout.rows = rows; layout.cells = cells;
+    saveLayout();
+    render();
+  }
+
+  var layoutBar = document.getElementById("layoutBar");
+  function renderLayoutBar() {
+    var g = layout.mode === "grid";
+    var html = '<div class="seg" role="radiogroup" aria-label="Layout">' +
+      [["auto", "Auto"], ["grid", "Custom grid"]].map(function (o) {
+        return '<button type="button" role="radio" data-layout="' + o[0] + '" aria-checked="' + (layout.mode === o[0]) + '">' + o[1] + "</button>";
+      }).join("") + "</div>";
+    if (g) {
+      html += stepper("cols", "Columns", layout.cols) + stepper("rows", "Rows", layout.rows) +
+        '<button type="button" class="btn ghost small" data-clear-board>Clear board</button>';
+    } else {
+      html += '<button type="button" class="btn ghost small" id="resetOrder">Reset order</button>';
+    }
+    layoutBar.innerHTML = html;
+    document.getElementById("editHint").innerHTML = g
+      ? '<span class="hint-drag">Drag a tile onto any square, or click a tile and then a square.</span>' +
+        '<span class="hint-grip">Tap a project, then tap a square.</span> Empty squares stay empty. <b>✕</b> puts a project back in the box.'
+      : '<span class="hint-drag">Drag tiles to reorder.</span><span class="hint-grip">Drag <b>⠿</b> to reorder.</span> <b>✕</b> puts a project back in the box.';
+  }
+  function stepper(key, label, value) {
+    return '<span class="stepper" role="group" aria-label="' + label + '"><span class="stepper-label">' + label + "</span>" +
+      '<button type="button" data-step="' + key + '" data-d="-1" aria-label="Fewer ' + label.toLowerCase() + '">−</button>' +
+      '<b aria-live="polite">' + value + "</b>" +
+      '<button type="button" data-step="' + key + '" data-d="1" aria-label="More ' + label.toLowerCase() + '">+</button></span>';
+  }
+  layoutBar.addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    if (b.dataset.layout) {
+      if (b.dataset.layout === layout.mode) return;
+      layout.mode = b.dataset.layout;
+      if (layout.mode === "grid") startBoard();
+      picked = null;
+      saveLayout();
+      render();
+      var again = layoutBar.querySelector('[data-layout="' + layout.mode + '"]');
+      if (again) again.focus();
+    } else if (b.dataset.step) {
+      var d = +b.dataset.d;
+      resizeBoard(layout.cols + (b.dataset.step === "cols" ? d : 0), layout.rows + (b.dataset.step === "rows" ? d : 0));
+      var same = layoutBar.querySelector('[data-step="' + b.dataset.step + '"][data-d="' + b.dataset.d + '"]');
+      if (same) same.focus();
+    } else if (b.hasAttribute("data-clear-board")) {
+      layout.cells = layout.cells.map(function () { return null; });
+      saveLayout();
+      flipById(renderBoard);
+    } else if (b.id === "resetOrder") {
+      resetOrder();
+    }
+  });
 
   function renderBox() {
     var ids = fullOrder().filter(isHidden);
@@ -433,11 +618,19 @@
   }
 
   // ---------- launching ----------
+  var justDragged = false;
   grid.addEventListener("click", function (e) {
+    if (justDragged) { justDragged = false; e.preventDefault(); return; }
     var moveBtn = e.target.closest("[data-move]");
     if (moveBtn) { moveBy(moveBtn.closest(".tile"), +moveBtn.dataset.move, moveBtn); return; }
     var hideBtn = e.target.closest("[data-hide]");
     if (hideBtn) { hideProject(hideBtn.closest(".tile")); return; }
+    if (editing && layout.mode === "grid") {
+      var spot = e.target.closest(".tile, .slot, [data-tray]");
+      e.preventDefault();
+      if (spot) boardTap(spot);
+      return;
+    }
     var link = e.target.closest(".tile-link");
     if (!link) return;
     if (editing) { e.preventDefault(); return; }
@@ -463,6 +656,7 @@
     editPanel.hidden = !on;
     doneFab.hidden = !on;
     if (on) { lookPanel.open = wide.matches; renderLook(); }
+    if (!on && picked) { picked = null; tiles().forEach(function (t) { t.classList.remove("picked"); }); document.body.classList.remove("picking"); }
     tiles().forEach(function (t) {
       var a = t.querySelector(".tile-link");
       if (on) a.tabIndex = -1; else a.removeAttribute("tabindex");
@@ -474,7 +668,7 @@
     if (e.key === "Escape" && editing && !drag) { setEditing(false); customizeBtn.focus(); }
   });
 
-  document.getElementById("resetOrder").addEventListener("click", function () {
+  function resetOrder() {
     save(KEY.order, []);
     var want = visibleIds();
     flip(function () {
@@ -482,7 +676,7 @@
       tiles().forEach(function (t) { map[t.dataset.id] = t; });
       want.forEach(function (id) { if (map[id]) grid.appendChild(map[id]); });
     });
-  });
+  }
 
   // The box: hidden projects wait here until they're tapped back in.
   function hideProject(tile) {
@@ -491,7 +685,13 @@
     var h = hiddenIds();
     if (h.indexOf(id) < 0) h.push(id);
     save(KEY.hidden, h);
-    flip(function () { tile.remove(); });
+    if (layout.mode === "grid") {
+      if (picked === id) picked = null;
+      flipById(renderBoard);
+      next = null;
+    } else {
+      flip(function () { tile.remove(); });
+    }
     renderBox();
     renderStats();
     renderLegend();
@@ -503,6 +703,18 @@
     if (!chip) return;
     var id = chip.dataset.show;
     save(KEY.hidden, hiddenIds().filter(function (x) { return x !== id; }));
+    if (layout.mode === "grid") {
+      // On the board it takes the first free square, or waits in the tray.
+      if (layout.cells.indexOf(id) < 0) {
+        var f = firstFree();
+        if (f >= 0) { layout.cells[f] = id; saveLayout(); }
+      }
+      flipById(renderBoard);
+      renderBox();
+      renderLegend();
+      (boxItems.querySelector("[data-show]") || customizeBtn).focus();
+      return;
+    }
     // Put it back in the slot it came from.
     var ids = visibleIds(), i = ids.indexOf(id);
     var after = null;
@@ -536,6 +748,17 @@
   }
 
   function moveBy(tile, dir, focusBtn) {
+    if (layout.mode === "grid") {
+      if (tile.dataset.cell == null) return;
+      var to = +tile.dataset.cell + dir;
+      var target = grid.querySelector(':scope > [data-cell="' + to + '"]');
+      if (!target) return;
+      var id = tile.dataset.id;
+      placeAt(id, target);
+      var again = grid.querySelector('.tile[data-id="' + CSS.escape(id) + '"] [data-move="' + dir + '"]');
+      if (again) again.focus();
+      return;
+    }
     var list = tiles();
     var i = list.indexOf(tile), j = i + dir;
     if (j < 0 || j >= list.length) return;
@@ -577,7 +800,27 @@
     }
     e.preventDefault();
     follow();
-    swapUnderPointer();
+    track();
+  }
+  function track() { if (layout.mode === "grid") markDrop(); else swapUnderPointer(); }
+
+  function dropUnderPointer() {
+    var g = grid.getBoundingClientRect();
+    var list = grid.querySelectorAll(":scope > .tile, :scope > .slot, :scope > [data-tray]");
+    for (var k = 0; k < list.length; k++) {
+      var t = list[k];
+      if (t === drag.tile) continue;
+      var l = g.left + t.offsetLeft, tp = g.top + t.offsetTop;
+      if (drag.x >= l && drag.x <= l + t.offsetWidth && drag.y >= tp && drag.y <= tp + t.offsetHeight) return t;
+    }
+    return null;
+  }
+  function markDrop() {
+    var t = dropUnderPointer();
+    if (t === drag.over) return;
+    if (drag.over) drag.over.classList.remove("drop-target");
+    drag.over = t;
+    if (t) t.classList.add("drop-target");
   }
 
   function follow() {
@@ -611,7 +854,7 @@
     var edge = 70, v = 0;
     if (drag.y < edge) v = -Math.ceil((edge - drag.y) / 5);
     else if (drag.y > innerHeight - edge) v = Math.ceil((drag.y - (innerHeight - edge)) / 5);
-    if (v) { window.scrollBy(0, v); follow(); swapUnderPointer(); }
+    if (v) { window.scrollBy(0, v); follow(); track(); }
     drag.raf = requestAnimationFrame(autoScroll);
   }
 
@@ -621,7 +864,32 @@
     drag = null;
     cancelAnimationFrame(d.raf);
     if (!d.active) return;
+    justDragged = true;
+    setTimeout(function () { justDragged = false; }, 0);
     var t = d.tile;
+    if (layout.mode === "grid") {
+      if (d.over) d.over.classList.remove("drop-target");
+      t.classList.remove("dragging");
+      document.body.classList.remove("is-dragging");
+      if (d.over) {
+        // Let the dropped tile glide from where it was let go.
+        var r = t.getBoundingClientRect();
+        t.style.transform = "";
+        var id = t.dataset.id;
+        placeAt(id, d.over);
+        var nt = grid.querySelector('.tile[data-id="' + CSS.escape(id) + '"]');
+        if (nt && nt.animate) {
+          var r2 = nt.getBoundingClientRect();
+          nt.animate([{ transform: "translate(" + (r.left - r2.left) + "px," + (r.top - r2.top) + "px)" }, { transform: "none" }], { duration: 200, easing: "cubic-bezier(.2,.8,.2,1)" });
+        }
+      } else {
+        var back = t.style.transform;
+        t.style.transform = "";
+        if (t.animate && back) t.animate([{ transform: back }, { transform: "none" }], { duration: 200, easing: "cubic-bezier(.2,.8,.2,1)" });
+      }
+      if (pendingRemote) { var p0 = pendingRemote; pendingRemote = null; applyRemotePrefs(p0[0], p0[1]); }
+      return;
+    }
     var from = t.style.transform;
     t.style.transform = "";
     t.classList.remove("dragging");
@@ -705,7 +973,7 @@
   // newer copy from another device when one arrives.
   var pushTimer = 0;
   function prefsSnapshot() {
-    return { order: loadList(KEY.order), hidden: hiddenIds(), look: look, skin: currentSkin() };
+    return { order: loadList(KEY.order), hidden: hiddenIds(), look: look, skin: currentSkin(), layout: layout };
   }
   function prefsChanged() {
     save(KEY.prefsAt, Date.now());
@@ -722,6 +990,7 @@
     if (Array.isArray(p.hidden)) save(KEY.hidden, p.hidden);
     if (p.look) { look = normalizeLook(p.look); save(KEY.look, look); }
     if (p.skin && DEFAULT_LOOK[p.skin]) { root.dataset.skin = p.skin; save(KEY.skin, p.skin); }
+    if (p.layout) { save(KEY.layout, p.layout); layout = loadLayout(); picked = null; }
     save(KEY.prefsAt, at);
     applyingRemote = false;
     applyLook();
