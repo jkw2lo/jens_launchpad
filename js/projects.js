@@ -1,25 +1,39 @@
-// The launchpad's project list. To add a project, add one line here.
-//   id     short unique key (used to remember order and open counts; don't change it later)
+// Whose GitHub Pages sites to look for. Any new repo with a Pages site shows up
+// on the launchpad automatically, even if it isn't listed below.
+window.GITHUB_USER = "jkw2lo";
+
+// Project types. Brutal colours tiles by type; the colours can be changed in Customize.
+window.CATEGORIES = [
+  { id: "languages", label: "Languages" },
+  { id: "planning", label: "Planning" },
+  { id: "home", label: "Home" },
+  { id: "making", label: "Making" },
+  { id: "more", label: "More" }
+];
+
+// The known projects. Listing a project here lets you give it a nicer name,
+// blurb, icon and type than the automatic GitHub lookup can.
+//   id     short unique key (remembers order, box and open counts; don't change it later)
+//   repo   the GitHub repo name
 //   name   button label
-//   blurb  one short line under the name
-//   url    where the button goes
+//   blurb  one short line under the name (keep it under ~25 characters)
 //   icon   one of the keys in ICONS below
-//   c1/c2  two accent colours (used by the Prism skin)
-//   shape  circle | square | triangle | half (used by the Prism skin)
+//   cat    one of the CATEGORIES ids
+//   c1/c2  this project's own colours (used when Prism is set to "Different")
 window.PROJECTS = [
-  { id: "cantonese", name: "Cantonese Quest", blurb: "Speak & read Cantonese", url: "https://jkw2lo.github.io/learn_cantonese_quest/", icon: "speech", c1: "#ff7a59", c2: "#ffd166", shape: "circle" },
-  { id: "hanzi", name: "Hanzi Quest", blurb: "Read Chinese characters", url: "https://jkw2lo.github.io/learn_chinese_hanzi_quest/", icon: "grid", c1: "#ef476f", c2: "#ffb3c6", shape: "square" },
-  { id: "nihongo", name: "Nihongo Quest", blurb: "Getting-by Japanese", url: "https://jkw2lo.github.io/learn_japanese_nihongo_quest/", icon: "torii", c1: "#f94144", c2: "#90e0ef", shape: "half" },
-  { id: "groundwork", name: "Groundwork", blurb: "Habits & focus timer", url: "https://jkw2lo.github.io/groundwork_habits_tasks/", icon: "sprout", c1: "#06d6a0", c2: "#b8f2e6", shape: "triangle" },
-  { id: "planner", name: "Magnet Board", blurb: "Weekly planner", url: "https://jkw2lo.github.io/planner/", icon: "magnet", c1: "#4361ee", c2: "#f72585", shape: "square" },
-  { id: "year", name: "Year Register", blurb: "A year of plans on one page", url: "https://jkw2lo.github.io/yearly_calendar/", icon: "calendar", c1: "#7209b7", c2: "#ffd166", shape: "circle" },
-  { id: "trip", name: "Trip Board", blurb: "Trips without the spreadsheet", url: "https://jkw2lo.github.io/trip_planner/", icon: "pin", c1: "#00b4d8", c2: "#ffb703", shape: "triangle" },
-  { id: "recipes", name: "Recipe Book", blurb: "Recipes, minus the life story", url: "https://jkw2lo.github.io/recipe_book/", icon: "pot", c1: "#fb8500", c2: "#8ecae6", shape: "half" },
-  { id: "shelf", name: "Shelf Life", blurb: "Skincare inventory", url: "https://jkw2lo.github.io/skincare_shelf/", icon: "bottle", c1: "#ff8fab", c2: "#a0c4ff", shape: "circle" },
-  { id: "writers", name: "Writers Blocks", blurb: "Structure long-form writing", url: "https://jkw2lo.github.io/writers-blocks/", icon: "blocks", c1: "#3a86ff", c2: "#ffbe0b", shape: "square" },
-  { id: "awl", name: "Awl & Gusset", blurb: "Leather bag pattern drafter", url: "https://jkw2lo.github.io/awl-gusset/", icon: "bag", c1: "#bc6c25", c2: "#dda15e", shape: "triangle" },
-  { id: "notebook", name: "Notebook Portfolio", blurb: "A junk journal on facing pages", url: "https://jkw2lo.github.io/notebook_portfolio/", icon: "book", c1: "#8338ec", c2: "#ff006e", shape: "half" },
-  { id: "garage", name: "Jen's Side Projects", blurb: "The garage portfolio", url: "https://jkw2lo.github.io/jens_side_projects/", icon: "garage", c1: "#2a9d8f", c2: "#e9c46a", shape: "square" }
+  { id: "cantonese", repo: "learn_cantonese_quest", name: "Cantonese Quest", blurb: "Speak & read Cantonese", icon: "speech", cat: "languages", c1: "#ff7a59", c2: "#ffd166" },
+  { id: "hanzi", repo: "learn_chinese_hanzi_quest", name: "Hanzi Quest", blurb: "Read Chinese characters", icon: "grid", cat: "languages", c1: "#ef476f", c2: "#ffb3c6" },
+  { id: "nihongo", repo: "learn_japanese_nihongo_quest", name: "Nihongo Quest", blurb: "Getting-by Japanese", icon: "torii", cat: "languages", c1: "#f94144", c2: "#90e0ef" },
+  { id: "groundwork", repo: "groundwork_habits_tasks", name: "Groundwork", blurb: "Habits & focus timer", icon: "sprout", cat: "planning", c1: "#06d6a0", c2: "#b8f2e6" },
+  { id: "planner", repo: "planner", name: "Magnet Board", blurb: "Weekly planner", icon: "magnet", cat: "planning", c1: "#4361ee", c2: "#f72585" },
+  { id: "year", repo: "yearly_calendar", name: "Year Register", blurb: "Your year at a glance", icon: "calendar", cat: "planning", c1: "#7209b7", c2: "#ffd166" },
+  { id: "trip", repo: "trip_planner", name: "Trip Board", blurb: "Plan trips day by day", icon: "pin", cat: "planning", c1: "#00b4d8", c2: "#ffb703" },
+  { id: "recipes", repo: "recipe_book", name: "Recipe Book", blurb: "Recipes without the fluff", icon: "pot", cat: "home", c1: "#fb8500", c2: "#8ecae6" },
+  { id: "shelf", repo: "skincare_shelf", name: "Shelf Life", blurb: "Skincare inventory", icon: "bottle", cat: "home", c1: "#ff8fab", c2: "#a0c4ff" },
+  { id: "writers", repo: "writers-blocks", name: "Writers Blocks", blurb: "Shape long-form writing", icon: "blocks", cat: "making", c1: "#3a86ff", c2: "#ffbe0b" },
+  { id: "awl", repo: "awl-gusset", name: "Awl & Gusset", blurb: "Leather bag patterns", icon: "bag", cat: "making", c1: "#bc6c25", c2: "#dda15e" },
+  { id: "notebook", repo: "notebook_portfolio", name: "Notebook Portfolio", blurb: "A digital junk journal", icon: "book", cat: "making", c1: "#8338ec", c2: "#ff006e" },
+  { id: "garage", repo: "jens_side_projects", name: "Jen's Side Projects", blurb: "The garage portfolio", icon: "garage", cat: "more", c1: "#2a9d8f", c2: "#e9c46a" }
 ];
 
 // 24×24 line icons, drawn with the current text colour.
@@ -36,5 +50,6 @@ window.ICONS = {
   blocks: '<rect x="3.5" y="13" width="8" height="7"/><rect x="12.5" y="13" width="8" height="7"/><rect x="8" y="5" width="8" height="7"/>',
   bag: '<path d="M4.5 8.5h15L18 20.5H6z"/><path d="M9 8.5V6.5a3 3 0 0 1 6 0v2"/><path d="M7 12h10" stroke-dasharray="1 2"/>',
   book: '<path d="M12 6.5C10 5 7 4.5 3.5 4.5v14c3.5 0 6.5.5 8.5 2 2-1.5 5-2 8.5-2v-14c-3.5 0-6.5.5-8.5 2z"/><path d="M12 6.5v14"/>',
-  garage: '<path d="M3 10l9-6 9 6v11H3z"/><path d="M6.5 21v-8h11v8"/><path d="M6.5 15.5h11M6.5 18.2h11"/>'
+  garage: '<path d="M3 10l9-6 9 6v11H3z"/><path d="M6.5 21v-8h11v8"/><path d="M6.5 15.5h11M6.5 18.2h11"/>',
+  spark: '<path d="M12 3v5M12 16v5M3 12h5M16 12h5"/><path d="M12 8l1.2 2.8L16 12l-2.8 1.2L12 16l-1.2-2.8L8 12l2.8-1.2z"/>'
 };

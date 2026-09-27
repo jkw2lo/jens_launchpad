@@ -21,42 +21,56 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Jost:wght@400;500;700&family=Manrope:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
+  <style id="lookStyle"></style>
 </head>
 <body>
   <div class="page">
     <header class="top">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-        <div>
+        <div class="brand-text">
           <h1>Jen's Launchpad</h1>
           <p class="summary" id="summary"></p>
         </div>
       </div>
-      <div class="controls">
-        <div class="skins" role="radiogroup" aria-label="Skin" id="skins">
-          <button type="button" role="radio" data-skin="mist"><span class="sw" aria-hidden="true"></span>Mist</button>
-          <button type="button" role="radio" data-skin="prism"><span class="sw" aria-hidden="true"></span>Prism</button>
-          <button type="button" role="radio" data-skin="brutal"><span class="sw" aria-hidden="true"></span>Brutal</button>
-          <button type="button" role="radio" data-skin="bauhaus"><span class="sw" aria-hidden="true"></span>Bauhaus</button>
-        </div>
-        <button type="button" class="btn" id="arrange" aria-pressed="false">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-          <span>Arrange</span>
-        </button>
-      </div>
+      <button type="button" class="btn" id="customize" aria-pressed="false" aria-controls="editPanel">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        <span class="label">Customize</span>
+      </button>
     </header>
 
-    <div class="arrange-bar" id="arrangeBar" hidden>
-      <p>Drag the tiles into the order you want, or use the arrows.</p>
-      <div class="arrange-actions">
-        <button type="button" class="btn ghost" id="resetOrder">Reset order</button>
+    <ul class="legend" id="legend" aria-label="Project types"></ul>
+
+    <section class="edit" id="editPanel" hidden aria-label="Customize">
+      <details class="panel look" id="lookPanel">
+        <summary>
+          <span class="panel-title">Look</span>
+          <span class="panel-note" id="lookNote"></span>
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="look-body" id="lookBody"></div>
+      </details>
+
+      <div class="panel box" id="box">
+        <div class="box-head">
+          <span class="panel-title">The box</span>
+          <span class="panel-note" id="boxNote"></span>
+        </div>
+        <ul class="box-items" id="boxItems"></ul>
       </div>
-    </div>
+
+      <div class="edit-hint">
+        <p><span class="hint-drag">Drag tiles to reorder</span><span class="hint-grip">Drag <b>⠿</b> to reorder</span> · <b>✕</b> puts a project back in the box.</p>
+        <button type="button" class="btn ghost small" id="resetOrder">Reset order</button>
+      </div>
+    </section>
 
     <ul class="grid" id="grid" aria-label="Projects"></ul>
 
     <footer class="foot">Open counts cover the last 30 days and are kept on this device only.</footer>
   </div>
+
+  <button type="button" class="btn primary done-fab" id="doneFab" hidden>Done</button>
 
   <script src="js/projects.js"></script>
   <script src="js/app.js"></script>
