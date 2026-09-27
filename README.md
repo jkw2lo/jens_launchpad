@@ -77,6 +77,14 @@ match /launchpad/{uid} {
 Because Groundwork is on the same site and uses the same project, signing in to
 one signs in to the other on that device, and the same goes for signing out.
 
+## Releasing
+
+GitHub Pages lets browsers cache files for 10 minutes, so a new `index.html`
+could otherwise load with an old cached script. Before committing changes to
+`css/` or `js/`, run `./bump-version.sh`. It stamps a fresh `?v=` on every
+CSS/JS link so the browser always gets a matching set. If the app ever fails to
+start anyway, a small fallback in `index.html` still lists every project as a plain link.
+
 ## Files
 
 ```
