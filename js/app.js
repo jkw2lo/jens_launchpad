@@ -319,7 +319,14 @@
   function renderBoard() {
     ensureLayout();
     var placed = {}, html = "";
-    layout.cells.forEach(function (id, i) {
+    // Outside Customize, rows that are empty all the way to the bottom take no space.
+    var shown = layout.cells.length;
+    if (!editing) {
+      var last = -1;
+      layout.cells.forEach(function (id, i) { if (!isFree(i)) last = i; });
+      shown = last < 0 ? 0 : (Math.floor(last / layout.cols) + 1) * layout.cols;
+    }
+    layout.cells.slice(0, shown).forEach(function (id, i) {
       if (!isFree(i)) { placed[id] = true; html += tileHtml(byId[id], i); }
       else html += '<li class="slot" data-cell="' + i + '"><span>Empty</span></li>';
     });
