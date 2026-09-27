@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en" data-skin="mist">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Jen's Launchpad</title>
+  <meta name="description" content="One page to open all of Jen's projects.">
+  <meta name="theme-color" content="#f3f4f6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Launchpad">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='12' height='12' rx='3' fill='%234f6bff'/%3E%3Crect x='18' y='2' width='12' height='12' rx='6' fill='%23ff5fa2'/%3E%3Crect x='2' y='18' width='12' height='12' rx='6' fill='%23ffb703'/%3E%3Crect x='18' y='18' width='12' height='12' rx='3' fill='%231d1b33'/%3E%3C/svg%3E">
+  <script>
+    // Apply the saved skin before first paint so there's no flash.
+    try {
+      var s = new URLSearchParams(location.search).get("skin") || JSON.parse(localStorage.getItem("jens_launchpad:skin"));
+      if (s) document.documentElement.dataset.skin = s;
+    } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Jost:wght@400;500;700&family=Manrope:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div>
+          <h1>Jen's Launchpad</h1>
+          <p class="summary" id="summary"></p>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="skins" role="radiogroup" aria-label="Skin" id="skins">
+          <button type="button" role="radio" data-skin="mist"><span class="sw" aria-hidden="true"></span>Mist</button>
+          <button type="button" role="radio" data-skin="prism"><span class="sw" aria-hidden="true"></span>Prism</button>
+          <button type="button" role="radio" data-skin="brutal"><span class="sw" aria-hidden="true"></span>Brutal</button>
+          <button type="button" role="radio" data-skin="bauhaus"><span class="sw" aria-hidden="true"></span>Bauhaus</button>
+        </div>
+        <button type="button" class="btn" id="arrange" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          <span>Arrange</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="arrange-bar" id="arrangeBar" hidden>
+      <p>Drag the tiles into the order you want, or use the arrows.</p>
+      <div class="arrange-actions">
+        <button type="button" class="btn ghost" id="resetOrder">Reset order</button>
+      </div>
+    </div>
+
+    <ul class="grid" id="grid" aria-label="Projects"></ul>
+
+    <footer class="foot">Open counts cover the last 30 days and are kept on this device only.</footer>
+  </div>
+
+  <script src="js/projects.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
