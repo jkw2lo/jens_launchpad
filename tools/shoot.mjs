@@ -18,8 +18,10 @@
 //
 // size:  "desktop" (1440×900, the default), "phone" (390×844 at 2×, a touch phone), or [w, h]
 // scale: pixel density, e.g. 2 for a sharp close-up crop
-// steps: "click:<css>", "scroll:<css>", "wait:<ms>", "eval:<js>" (awaited), run in order
-// clip:  a CSS selector to crop to (scrolled into view first); pad adds room around it
+// steps: "click:<css>", "scroll:<css>", "wait:<ms>", "eval:<js>" (awaited), "reload", run in order.
+//        Load sample data with eval (e.g. into localStorage), then reload.
+// clip:  a CSS selector to crop to (scrolled into view first). If it matches several elements,
+//        the crop covers them all. pad adds room around it, maxHeight cuts it short
 // url:   per shot, to override the top-level one
 
 import { spawn } from "node:child_process";
@@ -91,6 +93,12 @@ async function evaluate(session, expression) {
   return r.result.value;
 }
 
+async function settle(s, shot) {
+  for (let i = 0; i < 150 && (await evaluate(s, "document.readyState").catch(() => "")) !== "complete"; i++) await sleep(100);
+  await evaluate(s, "document.fonts.ready.then(() => true)");
+  await sleep(shot.settle ?? 800);
+}
+
 async function shoot(shot) {
   const { browserContextId } = await send("Target.createBrowserContext");
   const { targetId } = await send("Target.createTarget", { url: "about:blank", browserContextId });
@@ -107,15 +115,14 @@ async function shoot(shot) {
       await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 }, s);
     }
     await send("Page.navigate", { url: shot.url || cfg.url }, s);
-    for (let i = 0; i < 150 && (await evaluate(s, "document.readyState").catch(() => "")) !== "complete"; i++) await sleep(100);
-    await evaluate(s, "document.fonts.ready.then(() => true)");
-    await sleep(shot.settle ?? 800);
+    await settle(s, shot);
 
     for (const step of shot.steps || []) {
       const at = step.indexOf(":");
       const kind = step.slice(0, at), arg = step.slice(at + 1);
       const el = "document.querySelector(" + JSON.stringify(arg) + ")";
       const missing = "throw new Error(" + JSON.stringify("nothing matches " + arg) + ")";
+      if (step === "reload") { await send("Page.reload", {}, s); await sleep(300); await settle(s, shot); continue; }
       if (kind === "click") await evaluate(s, "{ const el = " + el + "; if (!el) " + missing + "; el.click(); }");
       else if (kind === "scroll") await evaluate(s, "{ const el = " + el + "; if (!el) " + missing + "; el.scrollIntoView({ block: 'center' }); }");
       else if (kind === "wait") await sleep(+arg);
@@ -127,10 +134,15 @@ async function shoot(shot) {
     const opts = { format: "png", captureBeyondViewport: !!shot.clip };
     if (shot.clip) {
       const pad = shot.pad ?? 0;
-      const r = await evaluate(s, "(() => { const el = document.querySelector(" + JSON.stringify(shot.clip) + ");" +
-        "if (!el) throw new Error(" + JSON.stringify("nothing matches " + shot.clip) + ");" +
-        "el.scrollIntoView({ block: 'start' }); const b = el.getBoundingClientRect();" +
-        "return { x: b.left + scrollX, y: b.top + scrollY, w: b.width, h: Math.min(b.height, " + (shot.maxHeight || 1200) + ") }; })()");
+      // Every element the selector matches, joined into one box (e.g. both pages of a spread)
+      const r = await evaluate(s, "(() => { const els = [...document.querySelectorAll(" + JSON.stringify(shot.clip) + ")]" +
+        ".filter((e) => e.getBoundingClientRect().width > 0);" +
+        "if (!els.length) throw new Error(" + JSON.stringify("nothing visible matches " + shot.clip) + ");" +
+        "els[0].scrollIntoView({ block: 'start' });" +
+        "const bs = els.map((e) => e.getBoundingClientRect());" +
+        "const x = Math.min(...bs.map((b) => b.left)), y = Math.min(...bs.map((b) => b.top));" +
+        "const w = Math.max(...bs.map((b) => b.right)) - x, h = Math.max(...bs.map((b) => b.bottom)) - y;" +
+        "return { x: x + scrollX, y: y + scrollY, w, h: Math.min(h, " + (shot.maxHeight || 1200) + ") }; })()");
       opts.clip = { x: Math.max(0, r.x - pad), y: Math.max(0, r.y - pad), width: r.w + pad * 2, height: r.h + pad * 2, scale: 1 };
     }
     const { data } = await send("Page.captureScreenshot", opts, s);
