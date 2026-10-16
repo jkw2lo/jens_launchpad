@@ -154,14 +154,41 @@
     .stat b { display: block; font: 700 clamp(1.8rem, 1.4rem + 1.4vw, 2.4rem)/1.05 var(--num); letter-spacing: -0.03em; white-space: nowrap; }
     .stat span { display: block; margin-top: 6px; font-size: 0.88rem; line-height: 1.4; opacity: 0.88; }
 
-    /* ---------- 3. highlights ---------- */
-    .features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+    /* ---------- 3. key features ---------- */
+    .section-head { margin: 34px 0 14px; }
+    .section-head .kicker { margin: 0; }
+    /* a feature with a screenshot: a full-width row, text and picture alternating sides */
+    .feature-row { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 36px; align-items: center; }
+    .feature-row.flip > .shot { order: -1; }
+    .feature-row.flip { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); }
+    @media (max-width: 799px) {
+      .feature-row, .feature-row.flip { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+      .feature-row.flip > .shot { order: 0; }
+    }
+    .feature-row h3 { font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem); letter-spacing: -0.02em; }
+    .feature-row .lead { margin-top: 8px; color: var(--muted); font-size: 1rem; }
+    .feature-row .frame { max-height: 420px; }
+    .feature-row .frame img { object-fit: cover; object-position: top; max-height: 400px; }
+    .details { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    .details li { position: relative; padding-left: 22px; font-size: 0.93rem; line-height: 1.45; }
+    .details li::before {
+      content: ""; position: absolute; left: 2px; top: 0.5em; width: 8px; height: 8px;
+      border-radius: 50%; background: var(--accent);
+    }
+    .features .details { margin-top: 10px; gap: 6px; }
+    .features .details li { font-size: 0.86rem; color: var(--ink); }
+
+    /* features without a screenshot: cards */
+    .features { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
     @media (max-width: 859px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 599px) { .features { gap: 10px; } .features li { padding: 14px; border-radius: 16px; } .features h3 { font-size: 0.95rem; } .features p { font-size: 0.85rem; } }
+    @media (max-width: 599px) { .features { gap: 10px; } .features > li { padding: 14px; border-radius: 16px; } .features h3 { font-size: 0.95rem; } .features p { font-size: 0.85rem; } }
     @media (max-width: 339px) { .features { grid-template-columns: minmax(0, 1fr); } }
-    .features li { padding: 18px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
-    .features li::before { content: ""; display: block; width: 22px; height: 4px; margin-bottom: 12px; border-radius: 2px; background: var(--accent); }
+    @media (max-width: 599px) { .features.detailed { grid-template-columns: minmax(0, 1fr); } }
+    .features > li { padding: 18px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .features > li::before { content: ""; display: block; width: 22px; height: 4px; margin-bottom: 12px; border-radius: 2px; background: var(--accent); }
     .features p { margin-top: 4px; color: var(--muted); font-size: 0.9rem; line-height: 1.45; }
+
+    section.feature-row, .features + section, section + .features { margin-top: 14px; }
 
     /* ---------- 4. more screens ---------- */
     .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px; align-items: start; }
@@ -189,7 +216,7 @@
     <main id="main" aria-live="polite"></main>
   </div>
 
-  <script src="js/projects.js?v=202610160353"></script>
+  <script src="js/projects.js?v=202610160402"></script>
   <script>
   (function () {
     "use strict";
@@ -247,12 +274,13 @@
         failed("This project has no overview yet", "There's no overview/overview.json in its repo, or it couldn't be read.");
       });
 
-    function figure(s, phone) {
+    // frame: "browser" (a window bar on top), "phone", or "plain" (just a rounded edge)
+    function figure(s, frame) {
       var url = safeUrl(str(s.src, 300), jsonUrl);
       if (!url) return "";
-      var isPhone = phone || s.frame === "phone";
-      return '<figure class="shot"><div class="frame' + (isPhone ? " phone" : "") + '">' +
-        '<div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>' +
+      frame = { browser: 1, phone: 1, plain: 1 }[s.frame] ? s.frame : frame || "browser";
+      return '<figure class="shot"><div class="frame ' + frame + '">' +
+        (frame === "browser" ? '<div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>' : "") +
         '<img src="' + esc(url) + '" alt="' + esc(str(s.alt, 200)) + '" loading="lazy"></div>' +
         (str(s.caption) ? "<figcaption>" + esc(str(s.caption, 160)) + "</figcaption>" : "") + "</figure>";
     }
@@ -307,12 +335,34 @@
         "</section>";
       }
 
-      // 3. Highlights: four things it does well
+      // 3. Key features. One with a screenshot gets its own row (sides alternate);
+      // ones without are cards, side by side.
       var features = list(d.features, 4).filter(function (x) { return x && str(x.title); });
+      function details(x) {
+        var items = list(x.details, 3).map(function (t) { return str(t, 90); }).filter(Boolean);
+        return items.length ? '<ul class="details">' + items.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>" : "";
+      }
       if (features.length) {
-        html += '<section><ul class="features" aria-label="Highlights">' + features.map(function (x) {
-          return "<li><h3>" + esc(str(x.title, 30)) + "</h3>" + (str(x.text) ? "<p>" + esc(str(x.text, 80)) + "</p>" : "") + "</li>";
-        }).join("") + "</ul></section>";
+        html += '<div class="section-head"><p class="kicker">Key features</p></div>';
+        var cards = [], rows = 0;
+        var flushCards = function () {
+          if (!cards.length) return;
+          var detailed = cards.some(function (x) { return list(x.details, 3).length; });
+          html += '<section><ul class="features' + (detailed ? " detailed" : "") + '" style="--n:' + Math.min(cards.length, 4) + '">' + cards.map(function (x) {
+            return "<li><h3>" + esc(str(x.title, 30)) + "</h3>" + (str(x.text) ? "<p>" + esc(str(x.text, 100)) + "</p>" : "") + details(x) + "</li>";
+          }).join("") + "</ul></section>";
+          cards = [];
+        };
+        features.forEach(function (x) {
+          var shot = x.screen && figure(x.screen, "plain");
+          if (!shot) { cards.push(x); return; }
+          flushCards();
+          html += '<section class="card feature-row' + (rows++ % 2 ? " flip" : "") + '"><div>' +
+            "<h3>" + esc(str(x.title, 30)) + "</h3>" +
+            (str(x.text) ? '<p class="lead">' + esc(str(x.text, 100)) + "</p>" : "") + details(x) +
+            "</div>" + shot + "</section>";
+        });
+        flushCards();
       }
 
       // 4. More screens
