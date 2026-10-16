@@ -20,7 +20,7 @@
 // scale: pixel density, e.g. 2 for a sharp close-up crop
 // steps: "click:<css>", "scroll:<css>", "wait:<ms>", "eval:<js>" (awaited), "reload", run in order.
 //        Load sample data with eval (e.g. into localStorage), then reload.
-// clip:  a CSS selector to crop to (scrolled into view first). If it matches several elements,
+// clip:  a CSS selector to crop to. If it matches several elements,
 //        the crop covers them all. pad adds room around it, maxHeight cuts it short
 // url:   per shot, to override the top-level one
 
@@ -131,6 +131,10 @@ async function shoot(shot) {
       await sleep(shot.stepDelay ?? 400);
     }
 
+    // Stop animations, so a fade that restarts when the page is resized for a crop
+    // can't leave the picture half-faded.
+    await evaluate(s, "{ const st = document.createElement('style'); st.textContent = '*, *::before, *::after { animation: none !important; transition: none !important; }'; document.head.appendChild(st); }");
+    await sleep(100);
     const opts = { format: "png", captureBeyondViewport: !!shot.clip };
     if (shot.clip) {
       const pad = shot.pad ?? 0;
@@ -138,7 +142,9 @@ async function shoot(shot) {
       const r = await evaluate(s, "(() => { const els = [...document.querySelectorAll(" + JSON.stringify(shot.clip) + ")]" +
         ".filter((e) => e.getBoundingClientRect().width > 0);" +
         "if (!els.length) throw new Error(" + JSON.stringify("nothing visible matches " + shot.clip) + ");" +
-        "els[0].scrollIntoView({ block: 'start' });" +
+        // Captured from the top of the page (the crop reaches below the window), so a sticky
+        // header sits up at the top rather than over the crop.
+        "scrollTo(0, 0);" +
         "const bs = els.map((e) => e.getBoundingClientRect());" +
         "const x = Math.min(...bs.map((b) => b.left)), y = Math.min(...bs.map((b) => b.top));" +
         "const w = Math.max(...bs.map((b) => b.right)) - x, h = Math.max(...bs.map((b) => b.bottom)) - y;" +
