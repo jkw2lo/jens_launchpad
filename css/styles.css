@@ -696,6 +696,27 @@ body:not(.editing) .tile-link:active { transform: scale(0.985); }
 .tile.is-cold .stat { color: color-mix(in srgb, var(--stat-ink) 62%, var(--stat-bg)); }
 [data-skin="brutal"] .tile.is-cold .stat { background: #ffffff; color: #0d0b1f; opacity: 1; }
 
+/* About: shown on a project whose repo has overview/overview.json */
+.about {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  padding: 5px 11px;
+  background: var(--stat-bg);
+  color: var(--stat-ink);
+  border: var(--stat-border);
+  border-radius: var(--stat-radius);
+  box-shadow: var(--stat-shadow);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) { .about:hover { filter: brightness(0.94); } }
+.about:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.editing .about { display: none; }
+
 /* decorations: hidden unless a skin turns them on */
 .deco { position: absolute; inset: 0; z-index: -1; pointer-events: none; display: none; }
 .deco i { position: absolute; display: block; }
@@ -788,6 +809,10 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   .stat b { font-size: 1rem; }
   .stat .sep,
   .stat .last { display: none; }
+  /* About moves into the row, left of the open count */
+  .tile:has(.about) .tile-link { padding-right: 84px; }
+  .about { top: 50%; right: 12px; transform: translateY(-50%); padding: 6px 10px; border-radius: 12px; }
+  [data-skin="bauhaus"] .about { border-radius: 0; }
 
   .editing .tile-link { padding-right: 176px; outline-offset: 3px; }
   .editing .grid .stat,
@@ -948,6 +973,7 @@ body.picking .tray-label { border-color: var(--focus); color: var(--ink); }
   }
   .grid.board .blurb,
   .grid.board .stat,
+  .grid.board .about,
   .grid.board .deco { display: none; }
   .grid.board .slot { min-height: 0; aspect-ratio: 1; font-size: 0.66rem; }
 

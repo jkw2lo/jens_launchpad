@@ -62,6 +62,15 @@ To give a project a nicer name, blurb, icon or type, add it to
 `icon` is one of the keys in `ICONS` in the same file, and `cat` is one of the
 `CATEGORIES`. Keep blurbs under about 25 characters so they fit on one line.
 
+## Project overviews
+
+A project gets an **About** link on its tile when its repo has
+`overview/overview.json`. It opens `overview.html?p=<repo>`, a one-page
+introduction for visitors: what it is, the problem it solves, a few numbers,
+how it works, highlights, screenshots and quick facts. Every project's overview
+uses the same layout from this repo; only the words and screenshots live in the
+project's repo. See [OVERVIEW.md](OVERVIEW.md) for the format and how to write one.
+
 ## Sync (launch counts and settings across devices)
 
 Sign in under Customize → Sync with Google or GitHub. This uses the shared Firebase
@@ -99,8 +108,10 @@ start anyway, a small fallback in `index.html` still lists every project as a pl
 
 ```
 index.html        page skeleton
+overview.html     the overview page shared by every project (reads <repo>/overview/overview.json)
+OVERVIEW.md       the overview format, and how to write one
 js/projects.js    the project list + icons
-js/app.js         rendering, reordering, the box, open counts, look
+js/app.js         rendering, reordering, the box, open counts, look, About links
 js/sync.js        optional sign-in + launch-count sync (Firebase)
 css/styles.css    layout + the four skins
 ```

@@ -13,7 +13,8 @@
     prefsAt: "jens_launchpad:prefs-at",
     layout: "jens_launchpad:layout", // single layout from before named layouts (migrated)
     layouts: "jens_launchpad:layouts",
-    layoutUse: "jens_launchpad:layout-use" // which layout this device shows; not synced
+    layoutUse: "jens_launchpad:layout-use", // which layout this device shows; not synced
+    overviews: "jens_launchpad:overviews" // which repos have an overview/overview.json
   };
   // Settings that follow you across devices when signed in (last change wins).
   var PREF_KEYS = [KEY.hidden, KEY.look, KEY.skin, KEY.layouts];
@@ -187,6 +188,7 @@
           '<span class="blurb" title="' + esc(p.blurb || "") + '">' + esc(p.blurb || "") + "</span></span>" +
           '<span class="stat"></span>' +
         "</a>" +
+        (overviews.has[p.repo] ? '<a class="about" href="overview.html?p=' + encodeURIComponent(p.repo) + '" aria-label="About ' + esc(p.name) + '">About</a>' : "") +
         '<span class="move">' +
           '<span class="grip" aria-hidden="true">' + SVG.grip + "</span>" +
           '<button type="button" data-move="-1" aria-label="Move ' + esc(p.name) + ' earlier">' + SVG.prev + "</button>" +
@@ -1076,6 +1078,7 @@
     lastExtra = sig;
     setProjects(window.PROJECTS.concat(extra));
     if (!drag) render();
+    checkOverviews();
   }
   function discover() {
     if (!OWNER || !window.fetch) return;
@@ -1093,6 +1096,42 @@
         mergeRepos(repos);
       })
       .catch(function () {});
+  }
+
+  // ---------- overviews ----------
+  // A project gets an About link when its repo has overview/overview.json (see OVERVIEW.md).
+  // Checked with a HEAD request per project, at most every 6 hours, plus once for any new project.
+  // Each repo is asked at most once per page load, so a failing one never loops.
+  var overviews = load(KEY.overviews, null) || { t: 0, has: {} };
+  var checkingOverviews = false;
+  var overviewAsked = {};
+  function checkOverviews() {
+    if (!window.fetch || checkingOverviews) return;
+    var stale = Date.now() - overviews.t >= REPO_CACHE_MS;
+    var todo = projects.filter(function (p) {
+      return p.repo && !overviewAsked[p.repo] && (stale || !(p.repo in overviews.has));
+    });
+    if (!todo.length) return;
+    todo.forEach(function (p) { overviewAsked[p.repo] = true; });
+    checkingOverviews = true;
+    Promise.all(todo.map(function (p) {
+      return fetch(p.url + "overview/overview.json", { method: "HEAD", cache: "no-cache" })
+        // only a 404 means "no overview"; rate limits and network errors keep what we knew
+        .then(function (r) { return r.ok ? true : r.status === 404 ? false : null; }, function () { return null; })
+        .then(function (ok) { return [p.repo, ok]; });
+    })).then(function (results) {
+      var changed = false;
+      results.forEach(function (r) {
+        if (r[1] === null) return;
+        if (overviews.has[r[0]] !== r[1]) changed = true;
+        overviews.has[r[0]] = r[1];
+      });
+      if (stale) overviews.t = Date.now();
+      save(KEY.overviews, overviews);
+      checkingOverviews = false;
+      if (changed && !drag) render();
+      checkOverviews(); // pick up any project discovered meanwhile
+    });
   }
 
   // ---------- sync (sign in to count launches on every device) ----------
@@ -1165,6 +1204,7 @@
   applyLook();
   render();
   discover();
+  checkOverviews();
   LaunchpadSync.init({
     change: function () { renderAccount(); renderFoot(); },
     getLocal: recentOpens,

@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Project overview · Jen's Launchpad</title>
+  <meta name="description" content="A one-page introduction to one of Jen's projects.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='12' height='12' rx='3' fill='%234f6bff'/%3E%3Crect x='18' y='2' width='12' height='12' rx='6' fill='%23ff5fa2'/%3E%3Crect x='2' y='18' width='12' height='12' rx='6' fill='%23ffb703'/%3E%3Crect x='18' y='18' width='12' height='12' rx='3' fill='%231d1b33'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <!--
+    One template for every project's overview. The words and pictures live in each
+    project's own repo, at overview/overview.json (see OVERVIEW.md); this page only
+    lays them out, so every overview has the same sections in the same order.
+      overview.html?p=<repo>           reads ../<repo>/overview/overview.json
+      overview.html?src=<url to json>  reads any overview.json (for previewing a draft)
+  -->
+  <style>
+    :root {
+      --accent: #4f6bdc;
+      --bg: #f6f5f2;
+      --card: #ffffff;
+      --ink: #15171b;
+      --muted: #62666f;
+      --line: rgba(21, 23, 27, 0.09);
+      --soft: color-mix(in srgb, var(--accent) 9%, var(--card));
+      --accent-ink: color-mix(in srgb, var(--accent) 78%, var(--ink));
+      --shadow: 0 1px 2px rgba(21, 23, 27, 0.04), 0 12px 32px -14px rgba(21, 23, 27, 0.16);
+      --font: "Manrope", system-ui, sans-serif;
+      --num: "Space Grotesk", "Manrope", system-ui, sans-serif;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111214;
+        --card: #1a1c20;
+        --ink: #eceef1;
+        --muted: #a0a5ae;
+        --line: rgba(236, 238, 241, 0.1);
+        --soft: color-mix(in srgb, var(--accent) 16%, var(--card));
+        --accent-ink: color-mix(in srgb, var(--accent) 62%, #ffffff);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -14px rgba(0, 0, 0, 0.6);
+        color-scheme: dark;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 400 1rem/1.55 var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; }
+    .page { max-width: 1040px; margin: 0 auto; padding: 20px 20px 56px; }
+    @media (max-width: 599px) { .page { padding: 14px 16px 40px; } }
+
+    /* ---------- top bar ---------- */
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 12px 7px 9px;
+      color: var(--muted); text-decoration: none; font-weight: 600; font-size: 0.88rem;
+      border-radius: 999px;
+    }
+    .back:hover { color: var(--ink); background: var(--line); }
+    .back svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .bar-label { color: var(--muted); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    /* ---------- shared ---------- */
+    section { margin-top: 18px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); padding: 32px; }
+    @media (max-width: 599px) { .card { padding: 22px 20px; border-radius: 20px; } }
+    .kicker {
+      display: flex; align-items: center; gap: 10px; margin: 0 0 14px;
+      color: var(--accent-ink); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .kicker::before { content: ""; width: 18px; height: 3px; border-radius: 2px; background: var(--accent); }
+    h1, h2, h3 { margin: 0; letter-spacing: -0.025em; line-height: 1.15; }
+    h2 { font-size: clamp(1.4rem, 1.1rem + 1.2vw, 1.9rem); font-weight: 800; }
+    h3 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+    p { margin: 0; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 20px; border-radius: 999px;
+      font: 700 0.95rem/1 var(--font); text-decoration: none;
+      border: 1.5px solid var(--line);
+    }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #fff); }
+    .btn.primary:hover { filter: brightness(1.08); }
+    .btn.ghost:hover { background: var(--line); }
+    .btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn:focus-visible, .back:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+    /* ---------- 1. hero ---------- */
+    .hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 40px; align-items: center; padding: 40px; overflow: hidden; }
+    @media (max-width: 859px) { .hero { grid-template-columns: minmax(0, 1fr); gap: 28px; padding: 26px 22px; } }
+    .badge-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 22px; }
+    .app-icon {
+      display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px;
+      background: var(--accent); color: var(--on-accent, #fff);
+    }
+    .app-icon svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .pill {
+      padding: 5px 11px; border-radius: 999px;
+      background: var(--soft); color: var(--accent-ink);
+      font-size: 0.78rem; font-weight: 700;
+    }
+    .pill.status::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
+    .hero h1 { font-size: clamp(2.2rem, 1.6rem + 2.6vw, 3.4rem); font-weight: 800; letter-spacing: -0.04em; }
+    .tagline { margin-top: 8px; font-size: clamp(1.1rem, 1rem + 0.6vw, 1.4rem); font-weight: 700; color: var(--accent-ink); letter-spacing: -0.015em; }
+    .pitch { margin-top: 16px; color: var(--muted); font-size: 1.05rem; max-width: 46ch; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+
+    .shot { margin: 0; }
+    .frame {
+      border-radius: 14px; overflow: hidden; background: var(--card);
+      border: 1px solid var(--line);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04), 0 24px 48px -20px rgba(0, 0, 0, 0.3);
+    }
+    .frame-bar { display: flex; gap: 6px; padding: 9px 12px; background: var(--soft); border-bottom: 1px solid var(--line); }
+    .frame-bar i { width: 9px; height: 9px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 18%, transparent); }
+    .frame img { width: 100%; height: auto; }
+    .frame.phone { max-width: 280px; margin: 0 auto; border-radius: 28px; border-width: 6px; border-color: color-mix(in srgb, var(--ink) 85%, transparent); }
+    .frame.phone .frame-bar { display: none; }
+    .hero .shot { transform: rotate(-1deg); }
+    figcaption { margin-top: 10px; color: var(--muted); font-size: 0.85rem; text-align: center; }
+
+    /* ---------- 2. problem + 3. numbers ---------- */
+    .why { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 18px; }
+    @media (max-width: 859px) { .why { grid-template-columns: minmax(0, 1fr); } }
+    .problem h2 { max-width: 22ch; }
+    .problem p { margin-top: 14px; color: var(--muted); font-size: 1.02rem; max-width: 58ch; }
+    .numbers { display: grid; gap: 0; padding-top: 22px; padding-bottom: 22px; background: var(--accent); color: var(--on-accent, #fff); border-color: transparent; }
+    .numbers .kicker { color: inherit; opacity: 0.85; }
+    .numbers .kicker::before { background: currentColor; }
+    .stat { padding: 14px 0; border-top: 1px solid color-mix(in srgb, currentColor 22%, transparent); }
+    .stat:first-of-type { border-top: 0; padding-top: 0; }
+    .stat b { display: block; font: 700 clamp(1.9rem, 1.5rem + 1.4vw, 2.5rem)/1.05 var(--num); letter-spacing: -0.03em; }
+    .stat span { display: block; margin-top: 4px; font-size: 0.92rem; opacity: 0.88; }
+
+    /* ---------- 4. how it works ---------- */
+    .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin: 26px 0 0; padding: 0; list-style: none; counter-reset: step; }
+    @media (max-width: 759px) { .steps { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
+    .steps li { position: relative; counter-increment: step; }
+    .steps li::before {
+      content: counter(step);
+      display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 14px;
+      border-radius: 50%; background: var(--soft); color: var(--accent-ink);
+      font: 700 1.1rem/1 var(--num);
+    }
+    /* the dotted line joining the step numbers */
+    .steps li:not(:last-child)::after {
+      content: ""; position: absolute; top: 20px; left: 52px; right: -16px;
+      border-top: 2px dotted color-mix(in srgb, var(--accent) 45%, transparent);
+    }
+    @media (max-width: 759px) {
+      .steps li { padding-left: 56px; }
+      .steps li::before { position: absolute; left: 0; top: -6px; margin: 0; }
+      .steps li:not(:last-child)::after { top: 40px; bottom: -18px; left: 19px; right: auto; border-top: 0; border-left: 2px dotted color-mix(in srgb, var(--accent) 45%, transparent); }
+    }
+    .steps p { margin-top: 6px; color: var(--muted); font-size: 0.95rem; }
+
+    /* ---------- 5. highlights ---------- */
+    .features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 24px 0 0; padding: 0; list-style: none; }
+    @media (max-width: 859px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 559px) { .features { grid-template-columns: minmax(0, 1fr); } }
+    .features li { padding: 20px; border-radius: 18px; background: var(--soft); }
+    .features li::before { content: ""; display: block; width: 26px; height: 4px; margin-bottom: 14px; border-radius: 2px; background: var(--accent); }
+    .features p { margin-top: 6px; color: var(--muted); font-size: 0.93rem; }
+
+    /* ---------- 6. gallery ---------- */
+    .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px; margin-top: 24px; align-items: start; }
+
+    /* ---------- 7. quick facts ---------- */
+    .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 22px 0 0; }
+    @media (max-width: 759px) { .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 18px; } }
+    .facts div { padding: 0 18px; border-left: 1px solid var(--line); }
+    .facts div:first-child { border-left: 0; padding-left: 0; }
+    @media (max-width: 759px) { .facts div:nth-child(odd) { border-left: 0; padding-left: 0; } }
+    .facts dt { color: var(--muted); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .facts dd { margin: 6px 0 0; font-weight: 600; font-size: 0.95rem; line-height: 1.4; }
+
+    /* ---------- 8. call to action ---------- */
+    .cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; background: var(--ink); color: var(--bg); border-color: transparent; }
+    .cta h2 { font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.7rem); }
+    .cta p { margin-top: 4px; opacity: 0.7; }
+    .cta .btn.ghost { color: var(--bg); border-color: color-mix(in srgb, var(--bg) 30%, transparent); }
+    .cta .btn.ghost:hover { background: color-mix(in srgb, var(--bg) 12%, transparent); }
+
+    /* ---------- missing / error ---------- */
+    .empty { text-align: center; padding: 64px 24px; }
+    .empty h1 { font-size: 1.6rem; }
+    .empty p { margin: 10px auto 22px; color: var(--muted); max-width: 44ch; }
+
+    @media (prefers-reduced-motion: reduce) { .hero .shot { transform: none; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="bar">
+      <a class="back" href="./">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+        Launchpad
+      </a>
+      <span class="bar-label">Project overview</span>
+    </nav>
+    <main id="main" aria-live="polite"></main>
+  </div>
+
+  <script src="js/projects.js?v=202610160334"></script>
+  <script>
+  (function () {
+    "use strict";
+    var main = document.getElementById("main");
+    var params = new URLSearchParams(location.search);
+    var repo = params.get("p") || "";
+    var src = params.get("src") || "";
+    var OWNER = window.GITHUB_USER || "";
+    var known = (window.PROJECTS || []).filter(function (p) { return p.repo === repo; })[0] || {};
+    var cats = {};
+    (window.CATEGORIES || []).forEach(function (c) { cats[c.id] = c.label; });
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+    function str(v, max) { return typeof v === "string" ? v.trim().slice(0, max || 600) : ""; }
+    function list(v, max) { return Array.isArray(v) ? v.slice(0, max) : []; }
+    // Only https links, or paths relative to the overview.json.
+    function safeUrl(u, base) {
+      try {
+        var url = new URL(u, base);
+        return /^https?:$/.test(url.protocol) ? url.href : "";
+      } catch (e) { return ""; }
+    }
+    function svg(path) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + path + "</svg>"; }
+    var ARROW = svg('<path d="M5 12h14M13 6l6 6-6 6"/>');
+    var CODE = svg('<path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/>');
+    // Dark or light text on the accent, whichever reads better.
+    function inkOn(hex) {
+      var n = parseInt(hex.slice(1), 16);
+      var rgb = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(function (v) {
+        v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      var L = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+      return L > 0.4 ? "#15171b" : "#ffffff";
+    }
+
+    function failed(title, why) {
+      document.title = "Overview not found · Jen's Launchpad";
+      main.innerHTML = '<div class="card empty"><h1>' + esc(title) + "</h1><p>" + esc(why) + "</p>" +
+        '<a class="btn ghost" href="./">Back to the launchpad</a></div>';
+    }
+
+    var jsonUrl;
+    if (src) jsonUrl = safeUrl(src, location.href);
+    else if (/^[A-Za-z0-9._-]+$/.test(repo)) jsonUrl = new URL("../" + repo + "/overview/overview.json", location.href).href;
+    if (!jsonUrl) return failed("No project picked", "Open an overview from a project's About link on the launchpad.");
+
+    fetch(jsonUrl, { cache: "no-cache" })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (d) { render(d || {}); })
+      .catch(function () {
+        failed("This project has no overview yet", "There's no overview/overview.json in its repo, or it couldn't be read.");
+      });
+
+    function figure(s, phone) {
+      var url = safeUrl(str(s.src, 300), jsonUrl);
+      if (!url) return "";
+      var isPhone = phone || s.frame === "phone";
+      return '<figure class="shot"><div class="frame' + (isPhone ? " phone" : "") + '">' +
+        '<div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>' +
+        '<img src="' + esc(url) + '" alt="' + esc(str(s.alt, 200)) + '" loading="lazy"></div>' +
+        (str(s.caption) ? "<figcaption>" + esc(str(s.caption, 160)) + "</figcaption>" : "") + "</figure>";
+    }
+
+    function render(d) {
+      var name = str(d.name, 60) || known.name || repo;
+      var accent = /^#[0-9a-f]{6}$/i.test(d.accent || "") ? d.accent : "#4f6bdc";
+      document.documentElement.style.setProperty("--accent", accent);
+      document.documentElement.style.setProperty("--on-accent", inkOn(accent));
+      document.title = name + " · Jen's Launchpad";
+
+      var appUrl = safeUrl(str(d.url, 300) || known.url || (repo ? "https://" + OWNER + ".github.io/" + repo + "/" : ""), location.href);
+      var codeUrl = repo && OWNER ? "https://github.com/" + OWNER + "/" + repo : "";
+      var icon = window.ICONS && (window.ICONS[known.icon] || window.ICONS.spark);
+      var cat = cats[known.cat] || "";
+      var screens = list(d.screens, 4);
+      var html = "";
+
+      // 1. Hero: who it is, what it does, the main picture
+      html += '<section class="card hero"><div>' +
+        '<div class="badge-row">' +
+          (icon ? '<span class="app-icon">' + svg(icon) + "</span>" : "") +
+          (cat ? '<span class="pill">' + esc(cat) + "</span>" : "") +
+          (str(d.status, 30) ? '<span class="pill status">' + esc(str(d.status, 30)) + "</span>" : "") +
+        "</div>" +
+        "<h1>" + esc(name) + "</h1>" +
+        (str(d.tagline) ? '<p class="tagline">' + esc(str(d.tagline, 80)) + "</p>" : "") +
+        (str(d.pitch) ? '<p class="pitch">' + esc(str(d.pitch, 260)) + "</p>" : "") +
+        '<div class="actions">' +
+          (appUrl ? '<a class="btn primary" href="' + esc(appUrl) + '">Open ' + esc(name) + " " + ARROW + "</a>" : "") +
+          (codeUrl ? '<a class="btn ghost" href="' + esc(codeUrl) + '">' + CODE + " Source</a>" : "") +
+        "</div></div>" +
+        (screens[0] ? figure(screens[0]) : "") +
+      "</section>";
+
+      // 2. The problem it solves, and 3. the numbers that prove it
+      var problem = d.problem || {};
+      var stats = list(d.stats, 3).filter(function (s) { return s && str(s.value); });
+      if (str(problem.headline) || stats.length) {
+        html += '<section class="why">' +
+          (str(problem.headline) ? '<div class="card problem"><p class="kicker">Why it exists</p>' +
+            "<h2>" + esc(str(problem.headline, 120)) + "</h2>" +
+            (str(problem.text) ? "<p>" + esc(str(problem.text, 420)) + "</p>" : "") + "</div>" : "") +
+          (stats.length ? '<div class="card numbers"><p class="kicker">By the numbers</p>' +
+            stats.map(function (s) {
+              return '<div class="stat"><b>' + esc(str(s.value, 16)) + "</b><span>" + esc(str(s.label, 90)) + "</span></div>";
+            }).join("") + "</div>" : "") +
+        "</section>";
+      }
+
+      // 4. How it works, in three steps
+      var steps = list(d.steps, 3).filter(function (s) { return s && str(s.title); });
+      if (steps.length) {
+        html += '<section class="card"><p class="kicker">How it works</p><h2>' + esc(str(d.stepsHeadline, 90) || "Three steps, start to finish") + "</h2>" +
+          '<ol class="steps">' + steps.map(function (s) {
+            return "<li><h3>" + esc(str(s.title, 50)) + "</h3><p>" + esc(str(s.text, 180)) + "</p></li>";
+          }).join("") + "</ol></section>";
+      }
+
+      // 5. Highlights
+      var features = list(d.features, 6).filter(function (f) { return f && str(f.title); });
+      if (features.length) {
+        html += '<section class="card"><p class="kicker">Highlights</p><h2>' + esc(str(d.featuresHeadline, 90) || "What it does well") + "</h2>" +
+          '<ul class="features">' + features.map(function (f) {
+            return "<li><h3>" + esc(str(f.title, 40)) + "</h3><p>" + esc(str(f.text, 160)) + "</p></li>";
+          }).join("") + "</ul></section>";
+      }
+
+      // 6. More screens
+      if (screens.length > 1) {
+        html += '<section class="card"><p class="kicker">A closer look</p><div class="gallery">' +
+          screens.slice(1).map(function (s) { return figure(s); }).join("") + "</div></section>";
+      }
+
+      // 7. Quick facts: always the same four
+      var f = d.facts || {};
+      var facts = [["Works on", f.worksOn], ["Your data", f.data], ["Built with", f.builtWith], ["Started", f.started]]
+        .filter(function (x) { return str(x[1]); });
+      if (facts.length) {
+        html += '<section class="card"><p class="kicker">Quick facts</p><dl class="facts">' +
+          facts.map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + esc(str(x[1], 90)) + "</dd></div>"; }).join("") +
+          "</dl></section>";
+      }
+
+      // 8. Call to action
+      if (appUrl) {
+        html += '<section class="card cta"><div><h2>' + esc(str(d.ctaHeadline, 80) || "Try " + name) + "</h2>" +
+          "<p>" + esc(str(d.ctaText, 120) || "Free, in your browser. Nothing to install.") + "</p></div>" +
+          '<div class="actions" style="margin:0">' +
+            '<a class="btn primary" href="' + esc(appUrl) + '">Open ' + esc(name) + " " + ARROW + "</a>" +
+            '<a class="btn ghost" href="./">All projects</a>' +
+          "</div></section>";
+      }
+
+      main.innerHTML = html;
+    }
+  })();
+  </script>
+</body>
+</html>
