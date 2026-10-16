@@ -44,7 +44,8 @@ When asked to "make the overview for <project>":
    can do with it, what it handles that others don't). Give the one or two most defining
    features a screenshot of that feature in use. Leave the rest for visitors to find in the app.
 5. **Write `overview.json`** using the schema below, within its limits. Then cut it again:
-   if a word can go without losing meaning, it goes.
+   if a word can go without losing meaning, it goes. Run
+   `node tools/check-overview.mjs ../<repo>/overview/overview.json` until it passes.
 6. **Take screenshots** (commands below) and check every one of them by looking at it.
 7. **Preview** it (below), on desktop and phone width, in light and dark.
 8. Commit `overview/` to the **project's** repo. Nothing in the launchpad changes.
@@ -120,11 +121,23 @@ node tools/shoot.mjs ../<repo>/overview/shots.json
 
 - `size`: `"desktop"` (1440×900, the default), `"phone"` (390×844, a touch phone), or `[w, h]`
 - `scale`: pixel density. Use 2 for feature close-ups so they stay sharp
-- `steps`: run in order: `click:<css>`, `scroll:<css>`, `wait:<ms>`, `eval:<js>` (e.g. to hide a
-  close button, or to load sample data into localStorage and reload)
-- `clip`: a CSS selector to crop to; `pad` adds room around it, `maxHeight` cuts it short
+- `steps`: run in order: `click:<css>`, `scroll:<css>`, `wait:<ms>`, `eval:<js>` (awaited), and
+  `reload`. To click a button that has no good selector, find it by its text in an `eval`:
+  `eval:[...document.querySelectorAll('button')].find(b => b.textContent.trim().startsWith('Board')).click()`
+- `clip`: a CSS selector to crop to. If it matches several elements (both pages of a spread),
+  the crop covers them all. `pad` adds room around it, `maxHeight` cuts it short
 
-Find selectors in the project's source. The main picture is the whole app at desktop size; feature
+**Most apps open empty on a first visit, so load content first.** In order of preference:
+
+- The app's own sample: an "Explore a sample" button (Writers Blocks), or starter files it serves
+  (Notebook Portfolio: `fetch('starters/travel-journal.json')` into its localStorage key, then `reload`).
+- Made-up data written straight into the app's localStorage key, then `reload`. Read the app's
+  load function to get the shape right, build the data in the `eval` with dates relative to
+  today (so the shots can be retaken any time), and use believable names and numbers.
+  Groundwork's `shots.json` is the example.
+
+Also hide anything a first visit throws up: tours (`click:.tour-skip`), "now works offline"
+notices, cookie banners. Find selectors in the project's source. The main picture is the whole app at desktop size; feature
 screenshots are crops of that one feature, with real-looking content, never an empty first-run
 state. Look at every image before using it. Keep each under about 400 KB (`sips -Z 1600 x.png`
 shrinks one on a Mac). Commit `shots.json` with the images so they can be retaken after the
