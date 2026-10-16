@@ -23,9 +23,8 @@ The page is `https://jkw2lo.github.io/jens_launchpad/overview.html?p=<repo>`. It
 repo publishes to GitHub Pages. For a repo that deploys from `main` / root, that's automatic.
 For one that builds into `docs/` or `dist/`, put `overview/` there, or have the build copy it.
 
-The launchpad checks every project for the file at most every 6 hours, so a new overview
-can take that long to get its About link. To see it sooner on your own browser, clear
-`jens_launchpad:overviews` from localStorage.
+The launchpad checks every project for the file each time it loads, so a new overview gets its
+About link on the next visit (allow a few minutes for GitHub Pages to publish it).
 
 ## Making one (instructions for Claude)
 

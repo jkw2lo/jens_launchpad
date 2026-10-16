@@ -1100,17 +1100,15 @@
 
   // ---------- overviews ----------
   // A project gets an About link when its repo has overview/overview.json (see OVERVIEW.md).
-  // Checked with a HEAD request per project, at most every 6 hours, plus once for any new project.
-  // Each repo is asked at most once per page load, so a failing one never loops.
-  var overviews = load(KEY.overviews, null) || { t: 0, has: {} };
+  // Tiles show what the last visit found straight away; then every project is checked again
+  // with one HEAD request, so a new overview shows up on the next visit. Each repo is asked
+  // at most once per page load, so a failing one never loops.
+  var overviews = load(KEY.overviews, null) || { has: {} };
   var checkingOverviews = false;
   var overviewAsked = {};
   function checkOverviews() {
     if (!window.fetch || checkingOverviews) return;
-    var stale = Date.now() - overviews.t >= REPO_CACHE_MS;
-    var todo = projects.filter(function (p) {
-      return p.repo && !overviewAsked[p.repo] && (stale || !(p.repo in overviews.has));
-    });
+    var todo = projects.filter(function (p) { return p.repo && !overviewAsked[p.repo]; });
     if (!todo.length) return;
     todo.forEach(function (p) { overviewAsked[p.repo] = true; });
     checkingOverviews = true;
@@ -1126,7 +1124,6 @@
         if (overviews.has[r[0]] !== r[1]) changed = true;
         overviews.has[r[0]] = r[1];
       });
-      if (stale) overviews.t = Date.now();
       save(KEY.overviews, overviews);
       checkingOverviews = false;
       if (changed && !drag) render();
