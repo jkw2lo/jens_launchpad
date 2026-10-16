@@ -21,7 +21,11 @@ link to a project's tile when it finds one.
 The page is `https://jkw2lo.github.io/jens_launchpad/overview.html?p=<repo>`. It reads
 `https://jkw2lo.github.io/<repo>/overview/overview.json`, so `overview/` must be in whatever the
 repo publishes to GitHub Pages. For a repo that deploys from `main` / root, that's automatic.
-For one that builds into `docs/` or `dist/`, put `overview/` there, or have the build copy it.
+For a Vite build deployed by a workflow (Pyon Mart), put it in `public/overview/`, which Vite
+copies into the build. Check after the deploy that the JSON URL above returns 200.
+
+Some repos already have files of their own in `overview/` (Nihongo Quest's summary page keeps
+its jpgs there). Never overwrite a file you didn't make.
 
 The launchpad checks every project for the file each time it loads, so a new overview gets its
 About link on the next visit (allow a few minutes for GitHub Pages to publish it).
@@ -119,13 +123,17 @@ node tools/shoot.mjs ../<repo>/overview/shots.json
 }
 ```
 
+- `file`: name it `.jpg` for photo-like screens (textures, 3D scenes, maps); it's saved as JPEG
+  and comes out several times smaller. Keep `.png` for flat UI
 - `size`: `"desktop"` (1440×900, the default), `"phone"` (390×844, a touch phone), or `[w, h]`
 - `scale`: pixel density. Use 2 for feature close-ups so they stay sharp
-- `steps`: run in order: `click:<css>`, `scroll:<css>`, `wait:<ms>`, `eval:<js>` (awaited), and
-  `reload`. To click a button that has no good selector, find it by its text in an `eval`:
+- `steps`: run in order: `click:<css>`, `scroll:<css>`, `wait:<ms>`, `eval:<js>` (awaited),
+  `reload`, and real input for apps you walk or point around: `key:w:5000` holds W for five
+  seconds, `tap:720,450` clicks there, `hover:720,450` moves the mouse there (for tooltips). To click a button that has no good selector, find it by its text in an `eval`:
   `eval:[...document.querySelectorAll('button')].find(b => b.textContent.trim().startsWith('Board')).click()`
 - `clip`: a CSS selector to crop to. If it matches several elements (both pages of a spread),
   the crop covers them all. `pad` adds room around it, `maxHeight` cuts it short
+- `region`: `[x, y, w, h]` of the window instead, for a canvas or 3D scene with no element to name
 
 **Most apps open empty on a first visit, so load content first.** In order of preference:
 
@@ -135,6 +143,10 @@ node tools/shoot.mjs ../<repo>/overview/shots.json
   load function to get the shape right, build the data in the `eval` with dates relative to
   today (so the shots can be retaken any time), and use believable names and numbers.
   Groundwork's `shots.json` is the example.
+
+If the app has a `?debug` mode or a demo record (Cha Chaan Teng Rush, Room to Breathe's designer
+layouts), use it. If a pick is random, fix `Math.random` to a seed in an `eval` step so the
+shots are the same every time, and check the pick is something you'd want on a promo page.
 
 Also hide anything a first visit throws up: tours (`click:.tour-skip`), "now works offline"
 notices, cookie banners. Find selectors in the project's source. The main picture is the whole app at desktop size; feature

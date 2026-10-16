@@ -16,10 +16,14 @@
 //     ]
 //   }
 //
+// file:  the image to write; name it .jpg for a photo-like scene (much smaller than .png)
 // size:  "desktop" (1440×900, the default), "phone" (390×844 at 2×, a touch phone), or [w, h]
 // scale: pixel density, e.g. 2 for a sharp close-up crop
-// steps: "click:<css>", "scroll:<css>", "wait:<ms>", "eval:<js>" (awaited), "reload", run in order.
+// steps: "click:<css>", "scroll:<css>", "wait:<ms>", "eval:<js>" (awaited), "reload",
+//        "key:<key>[:<ms held>]", "tap:<x>,<y>" and "hover:<x>,<y>" (real key presses and
+//        mouse events, for apps you have to walk or point around), run in order.
 //        Load sample data with eval (e.g. into localStorage), then reload.
+// region: [x, y, w, h] of the window to crop to, where there is no element to name
 // clip:  a CSS selector to crop to. If it matches several elements,
 //        the crop covers them all. pad adds room around it, maxHeight cuts it short
 // url:   per shot, to override the top-level one
@@ -93,6 +97,14 @@ async function evaluate(session, expression) {
   return r.result.value;
 }
 
+// "w", "Escape", "ArrowUp"… as a DevTools key event
+const KEYS = { Enter: 13, Escape: 27, " ": 32, ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, Shift: 16 };
+function keyEvent(name) {
+  if (name.length === 1 && /[a-z]/i.test(name)) return { key: name.toLowerCase(), code: "Key" + name.toUpperCase(), windowsVirtualKeyCode: name.toUpperCase().charCodeAt(0) };
+  if (!(name in KEYS)) throw new Error("unknown key " + name);
+  return { key: name, code: name === " " ? "Space" : name, windowsVirtualKeyCode: KEYS[name] };
+}
+
 async function settle(s, shot) {
   for (let i = 0; i < 150 && (await evaluate(s, "document.readyState").catch(() => "")) !== "complete"; i++) await sleep(100);
   await evaluate(s, "document.fonts.ready.then(() => true)");
@@ -122,6 +134,28 @@ async function shoot(shot) {
       const kind = step.slice(0, at), arg = step.slice(at + 1);
       const el = "document.querySelector(" + JSON.stringify(arg) + ")";
       const missing = "throw new Error(" + JSON.stringify("nothing matches " + arg) + ")";
+      if (kind === "key") {          // key:w:1500 holds w for 1.5 s
+        const [name, ms] = arg.split(":");
+        const k = keyEvent(name);
+        await send("Input.dispatchKeyEvent", { type: "keyDown", ...k }, s);
+        await sleep(+ms || 60);
+        await send("Input.dispatchKeyEvent", { type: "keyUp", ...k }, s);
+        await sleep(shot.stepDelay ?? 400);
+        continue;
+      }
+      if (kind === "hover") {        // hover:720,450 moves the mouse there (for tooltips)
+        const [x, y] = arg.split(",").map(Number);
+        await send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y }, s);
+        await sleep(shot.stepDelay ?? 400);
+        continue;
+      }
+      if (kind === "tap") {          // tap:720,450 clicks at that point in the window
+        const [x, y] = arg.split(",").map(Number);
+        for (const type of ["mouseMoved", "mousePressed", "mouseReleased"])
+          await send("Input.dispatchMouseEvent", { type, x, y, button: "left", clickCount: 1 }, s);
+        await sleep(shot.stepDelay ?? 400);
+        continue;
+      }
       if (step === "reload") { await send("Page.reload", {}, s); await sleep(300); await settle(s, shot); continue; }
       if (kind === "click") await evaluate(s, "{ const el = " + el + "; if (!el) " + missing + "; el.click(); }");
       else if (kind === "scroll") await evaluate(s, "{ const el = " + el + "; if (!el) " + missing + "; el.scrollIntoView({ block: 'center' }); }");
@@ -135,7 +169,10 @@ async function shoot(shot) {
     // can't leave the picture half-faded.
     await evaluate(s, "{ const st = document.createElement('style'); st.textContent = '*, *::before, *::after { animation: none !important; transition: none !important; }'; document.head.appendChild(st); }");
     await sleep(100);
-    const opts = { format: "png", captureBeyondViewport: !!shot.clip };
+    // A .jpg file is saved as JPEG: far smaller for photos, textures and 3D scenes
+    const jpeg = /\.jpe?g$/i.test(shot.file);
+    const opts = { format: jpeg ? "jpeg" : "png", captureBeyondViewport: !!shot.clip };
+    if (jpeg) opts.quality = shot.quality ?? 82;
     if (shot.clip) {
       const pad = shot.pad ?? 0;
       // Every element the selector matches, joined into one box (e.g. both pages of a spread)
@@ -150,6 +187,10 @@ async function shoot(shot) {
         "const w = Math.max(...bs.map((b) => b.right)) - x, h = Math.max(...bs.map((b) => b.bottom)) - y;" +
         "return { x: x + scrollX, y: y + scrollY, w, h: Math.min(h, " + (shot.maxHeight || 1200) + ") }; })()");
       opts.clip = { x: Math.max(0, r.x - pad), y: Math.max(0, r.y - pad), width: r.w + pad * 2, height: r.h + pad * 2, scale: 1 };
+    } else if (shot.region) {
+      // [x, y, w, h] of the window, for a canvas or a 3D scene with no element to crop to
+      const [x, y, width, height] = shot.region;
+      opts.clip = { x, y, width, height, scale: 1 };
     }
     const { data } = await send("Page.captureScreenshot", opts, s);
     writeFileSync(join(outDir, shot.file), Buffer.from(data, "base64"));
