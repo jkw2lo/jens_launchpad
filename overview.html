@@ -169,6 +169,9 @@
     .feature-row .lead { margin-top: 8px; color: var(--muted); font-size: 1rem; }
     .feature-row .frame { max-height: 420px; }
     .feature-row .frame img { object-fit: cover; object-position: top; max-height: 400px; }
+    /* a phone shot is shown whole, just narrower, rather than cut off at the bottom */
+    .feature-row .frame.phone { max-height: none; max-width: 230px; }
+    .feature-row .frame.phone img { max-height: none; }
     .details { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
     .details li { position: relative; padding-left: 22px; font-size: 0.93rem; line-height: 1.45; }
     .details li::before {
