@@ -15,6 +15,8 @@
       showcase.html?p=a,b,c             just those repos, in that order
       &t=Title  &i=A line of intro      optional heading and intro
       &v=grid | feature | list          the layout: cards, the first one large, or rows
+      &k=code  &n=Name                  a tracked link: a welcome screen first, and its button
+                                        records one visit (the code and the time, nothing else)
     Make a link from the launchpad: Customize → Share.
   -->
   <style>
@@ -106,12 +108,44 @@
       .grid.list .actions { margin-top: 8px; }
     }
 
+    /* Tracked links open on a welcome card; its button records the visit */
+    .welcome { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
+    .welcome-card {
+      width: min(560px, 100%); padding: 40px 36px 32px; text-align: left;
+      background: var(--card); border: 1px solid var(--line); border-radius: 26px; box-shadow: var(--shadow);
+    }
+    @media (max-width: 599px) { .welcome-card { padding: 30px 22px 24px; } }
+    .welcome-hi { margin: 0 0 6px; color: var(--muted); font-size: 1.05rem; font-weight: 600; }
+    .welcome h1 { font-size: clamp(1.9rem, 1.5rem + 1.8vw, 2.6rem); }
+    .welcome .intro { margin-top: 12px; }
+    .welcome-strip { display: flex; gap: 8px; margin: 26px 0 28px; }
+    .welcome-strip span { flex: 1; height: 8px; border-radius: 4px; }
+    .go {
+      display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px;
+      background: var(--ink); color: var(--bg); border: 0; border-radius: 999px;
+      font: 700 1rem/1 var(--font); cursor: pointer;
+    }
+    @media (hover: hover) { .go:hover { opacity: 0.88; } }
+    .go:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+    .go svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .welcome-note { margin: 16px 0 0; color: var(--muted); font-size: 0.78rem; }
+
     .empty { padding: 48px 24px; text-align: center; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 22px; }
     @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
   </style>
 </head>
 <body>
-  <div class="page">
+  <section class="welcome" id="welcome" hidden>
+    <div class="welcome-card">
+      <p class="welcome-hi" id="welcomeHi" hidden></p>
+      <h1 id="welcomeTitle"></h1>
+      <p class="intro" id="welcomeIntro" hidden></p>
+      <div class="welcome-strip" id="welcomeStrip" aria-hidden="true"></div>
+      <button type="button" class="go" id="go"></button>
+      <p class="welcome-note">Opening this lets Jen know the link was viewed. Nothing else about you is kept.</p>
+    </div>
+  </section>
+  <div class="page" id="page">
     <header>
       <h1 id="title">Projects</h1>
       <p class="intro" id="intro" hidden></p>
@@ -120,7 +154,7 @@
     <ul class="grid" id="grid" aria-live="polite"></ul>
   </div>
 
-  <script src="js/projects.js?v=202610291451"></script>
+  <script src="js/projects.js?v=202610291458"></script>
   <script>
   (function () {
     "use strict";
@@ -231,11 +265,54 @@
       "</li>";
     }
 
+    // A tracked link (&k=) opens on a welcome card. Its button records one visit, straight
+    // to Firestore's REST API (no SDK for visitors), then shows the projects. Coming back
+    // in the same tab (say from an About page) skips the card and isn't counted again.
+    var code = (params.get("k") || "").replace(/[^a-z0-9]/gi, "").slice(0, 24);
+    var greet = str(params.get("n"), 40);
+    var FIRESTORE = "https://firestore.googleapis.com/v1/projects/github-projects-5d4e4/databases/(default)/documents/showcase_visits" +
+      "?key=AIzaSyBeIyBs3FtSx9T_wlJHsCqkfxZkhbX3Qhk";
+    var seenKey = "showcase:seen:" + code, seen = false;
+    try { seen = sessionStorage.getItem(seenKey) === "1"; } catch (e) {}
+    function recordVisit() {
+      try {
+        fetch(FIRESTORE, {
+          method: "POST", keepalive: true, headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fields: { k: { stringValue: code }, at: { timestampValue: new Date().toISOString() } } })
+        }).catch(function () {});
+      } catch (e) {}
+    }
+    var gate = code && !seen;
+    if (gate) {
+      document.getElementById("page").hidden = true;
+      document.getElementById("welcome").hidden = false;
+      if (greet) { var hi = document.getElementById("welcomeHi"); hi.textContent = "Hi " + greet + ","; hi.hidden = false; }
+      document.getElementById("welcomeTitle").textContent = title;
+      if (intro) { var wi = document.getElementById("welcomeIntro"); wi.textContent = intro; wi.hidden = false; }
+      document.getElementById("go").innerHTML = "See the projects " + ARROW;
+      document.getElementById("go").addEventListener("click", function () {
+        recordVisit();
+        try { sessionStorage.setItem(seenKey, "1"); } catch (e) {}
+        document.getElementById("welcome").hidden = true;
+        document.getElementById("page").hidden = false;
+        window.scrollTo(0, 0);
+      });
+      document.getElementById("go").focus();
+    }
+
     allRepos().then(function (list) { return Promise.all(list.map(load)); }).then(function (all) {
       var shown = everything ? all.filter(function (x) { return x.d; }) : all;
       var grid = document.getElementById("grid");
       document.getElementById("count").textContent = shown.length ? shown.length + (shown.length === 1 ? " project" : " projects") : "";
       grid.innerHTML = shown.length ? shown.map(card).join("") : '<li class="empty">Nothing to show here yet.</li>';
+      // The welcome card's colour strip: one stripe per project, in its own accent
+      if (gate) {
+        document.getElementById("welcomeStrip").innerHTML = shown.map(function (x) {
+          var a = x.d && /^#[0-9a-f]{6}$/i.test(x.d.accent || "") ? x.d.accent : "#9aa0aa";
+          return '<span style="background:' + a + '"></span>';
+        }).join("");
+        document.getElementById("go").innerHTML = "See the " + (shown.length === 1 ? "project" : shown.length + " projects") + " " + ARROW;
+      }
     });
   })();
   </script>

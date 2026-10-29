@@ -635,6 +635,53 @@ details[open] .chev { transform: rotate(180deg); }
 .share-link { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .share-link input { flex: 1 1 260px; font-weight: 500; font-size: 0.82rem; color: var(--ctrl-muted); }
 .share-note { margin: 0; font-size: 0.8rem; color: var(--ctrl-muted); }
+.share-track { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; }
+@media (max-width: 699px) { .share-track { grid-template-columns: minmax(0, 1fr); } }
+.share-track input {
+  min-width: 0;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ctrl-ink);
+  background: var(--chip-bg);
+  border: var(--ctrl-border);
+  border-radius: var(--ctrl-radius);
+}
+.share-track input:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+#shareTracked { display: grid; gap: 10px; }
+#shareTracked > .btn { justify-self: start; }
+.share-tracked { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.share-tracked li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  background: var(--chip-bg);
+  border: var(--ctrl-border);
+  border-radius: var(--ctrl-radius);
+}
+.tl-main { display: grid; flex: 1 1 200px; min-width: 0; }
+.tl-label { font-weight: 700; font-size: 0.92rem; }
+.tl-meta { font-size: 0.76rem; color: var(--ctrl-muted); }
+.tl-seen { font-size: 0.82rem; color: var(--ctrl-muted); }
+.tl-seen b { color: var(--ctrl-ink); }
+.tl-del { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; background: transparent; color: var(--ctrl-muted); border: 0; border-radius: 8px; cursor: pointer; }
+.tl-del:hover { background: rgba(127, 127, 127, 0.14); color: var(--ctrl-ink); }
+.tl-del:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.tl-del svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.share-rule {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  background: var(--chip-bg);
+  border: var(--ctrl-border);
+  border-radius: var(--ctrl-radius);
+  font: 0.74rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--ctrl-ink);
+  white-space: pre;
+}
 
 .account-body { display: grid; gap: 10px; padding: 0 18px 16px; }
 .account-line { margin: 0; font-size: 0.9rem; }

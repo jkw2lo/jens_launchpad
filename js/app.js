@@ -1139,6 +1139,7 @@
   // so a link keeps working whatever happens here. Until you change anything, it's every
   // project with an overview, in launchpad order.
   var shareBody = document.getElementById("shareBody");
+  document.getElementById("sharePanel").addEventListener("toggle", function () { if (this.open) loadVisits(); });
   var SHARE_VIEWS = [["grid", "Grid"], ["feature", "Featured"], ["list", "List"]];
   var share = normalizeShare(load(KEY.share, null));
   function normalizeShare(v) {
@@ -1147,7 +1148,13 @@
       repos: Array.isArray(v.repos) ? v.repos.filter(function (r) { return typeof r === "string"; }) : null,
       view: SHARE_VIEWS.some(function (x) { return x[0] === v.view; }) ? v.view : "grid",
       title: typeof v.title === "string" ? v.title.slice(0, 80) : "",
-      intro: typeof v.intro === "string" ? v.intro.slice(0, 280) : ""
+      intro: typeof v.intro === "string" ? v.intro.slice(0, 280) : "",
+      // tracked links: { id (the k= code), label (yours only), name (the greeting), url, at }
+      links: Array.isArray(v.links) ? v.links.filter(function (l) {
+        return l && typeof l.id === "string" && typeof l.url === "string";
+      }).map(function (l) {
+        return { id: l.id.slice(0, 24), label: String(l.label || "").slice(0, 60), name: String(l.name || "").slice(0, 40), url: l.url, at: +l.at || 0 };
+      }) : []
     };
   }
   function shareable() { return fullOrder().map(function (id) { return byId[id]; }).filter(function (p) { return p && p.repo; }); }
@@ -1206,10 +1213,91 @@
         '<button type="button" class="btn small primary" data-share-act="copy">Copy link</button>' +
         '<a class="btn small" id="shareOpen" href="' + esc(shareLink()) + '" target="_blank" rel="noopener">Open</a>' +
         (share.repos ? '<button type="button" class="btn small ghost" data-share-act="reset">Back to everything with an overview</button>' : "") +
-      "</div>";
+      "</div>" +
+      '<div class="share-sub"><span class="field-label">Tracked links</span>' +
+        '<span class="share-hint">Each opens on a welcome screen, and its button records a visit</span></div>' +
+      '<div class="share-track">' +
+        '<input data-track="label" maxlength="60" placeholder="Who it\'s for, only you see this" aria-label="Who the link is for">' +
+        '<input data-track="name" maxlength="40" placeholder="First name for the greeting (optional)" aria-label="Greeting name">' +
+        '<button type="button" class="btn small primary" data-share-act="track">Make tracked link</button>' +
+      "</div>" +
+      '<div id="shareTracked"></div>';
+    renderTracked();
     document.getElementById("shareNote").textContent = picked.length + (picked.length === 1 ? " project" : " projects") + " on your showcase";
   }
   function saveShare() { save(KEY.share, share); }
+
+  // Visits to tracked links: read from showcase_visits once you're signed in
+  var visits = { status: "idle", by: {}, at: 0, msg: "" };
+  function loadVisits(force) {
+    if (!window.LaunchpadSync || LaunchpadSync.state.status !== "in") { visits.status = "signed-out"; renderTracked(); return; }
+    if (visits.status === "loading" || (!force && visits.status === "ok" && Date.now() - visits.at < 60000)) return;
+    visits.status = "loading";
+    renderTracked();
+    LaunchpadSync.visits().then(function (list) {
+      var by = {};
+      list.forEach(function (v) { var b = by[v.k] || (by[v.k] = { n: 0, last: 0 }); b.n++; if (v.at > b.last) b.last = v.at; });
+      visits = { status: "ok", by: by, at: Date.now(), msg: "" };
+      renderTracked();
+    }, function (e) {
+      var code = (e && e.code) || "";
+      visits = { status: /permission/.test(code) ? "no-rule" : code === "signed-out" ? "signed-out" : "error", by: {}, at: 0, msg: (e && e.message) || "" };
+      renderTracked();
+    });
+  }
+  function visitRule() {
+    var uid = (LaunchpadSync.state.user && LaunchpadSync.state.user.uid) || "YOUR-UID";
+    return "match /showcase_visits/{visit} {\n" +
+      "  allow create: if request.resource.data.keys().hasOnly(['k', 'at'])\n" +
+      "    && request.resource.data.k is string && request.resource.data.k.size() <= 24\n" +
+      "    && request.resource.data.at is timestamp\n" +
+      "    && request.resource.data.at > request.time - duration.value(10, 'm')\n" +
+      "    && request.resource.data.at < request.time + duration.value(10, 'm');\n" +
+      "  allow read: if request.auth != null && request.auth.uid == \"" + uid + "\";\n" +
+      "}";
+  }
+  function when(t) {
+    if (!t) return "";
+    var d = new Date(t), days = Math.floor((Date.now() - t) / 864e5);
+    var day = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    var time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    return days < 1 ? "today " + time : days < 2 ? "yesterday " + time : day;
+  }
+  function renderTracked() {
+    var box = document.getElementById("shareTracked");
+    if (!box) return;
+    var rows = share.links.slice().sort(function (a, b) { return b.at - a.at; }).map(function (l) {
+      var v = visits.by[l.id], seen;
+      if (visits.status === "ok") seen = v ? "<b>" + v.n + (v.n === 1 ? " visit" : " visits") + "</b> · last " + when(v.last) : "Not opened yet";
+      else seen = visits.status === "loading" ? "Checking…" : "";
+      return '<li><div class="tl-main"><span class="tl-label">' + esc(l.label || "Untitled") + "</span>" +
+        '<span class="tl-meta">' + (l.name ? "Greets " + esc(l.name) + " · " : "") + "made " + when(l.at) + "</span></div>" +
+        '<span class="tl-seen">' + seen + "</span>" +
+        '<button type="button" class="btn small" data-track-copy="' + esc(l.id) + '">Copy</button>' +
+        '<a class="btn small ghost" href="' + esc(l.url) + '" target="_blank" rel="noopener">Open</a>' +
+        '<button type="button" class="tl-del" data-track-del="' + esc(l.id) + '" aria-label="Forget the link for ' + esc(l.label) + '">' + SVG.close + "</button></li>";
+    }).join("");
+    var status = "";
+    if (visits.status === "signed-out") status = "Sign in under Sync, above, to see visits.";
+    else if (visits.status === "no-rule") status = "One step to see visits: in the Firebase console (project github-projects-5d4e4) open " +
+      "Firestore → Rules, paste this next to the launchpad rule, and Publish.";
+    else if (visits.status === "error") status = "Couldn't load visits: " + esc(visits.msg);
+    box.innerHTML = (rows ? '<ul class="share-tracked">' + rows + "</ul>" : "") +
+      (status ? '<p class="share-note">' + status + "</p>" : "") +
+      (visits.status === "no-rule" ? '<pre class="share-rule">' + esc(visitRule()) + "</pre>" +
+        '<div class="share-link"><button type="button" class="btn small" data-share-act="copyrule">Copy rule</button>' +
+        '<button type="button" class="btn small ghost" data-share-act="refresh">I\'ve added it</button></div>' : "") +
+      (rows && visits.status === "ok" ? '<button type="button" class="btn small ghost" data-share-act="refresh">Refresh visits</button>' : "");
+  }
+  function newCode() {
+    var a = new Uint8Array(6);
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    return Array.prototype.map.call(a, function (b) { return (b % 36).toString(36); }).join("");
+  }
+  function copyText(text, btn, label) {
+    var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = label; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () {});
+  }
   function shareChanged(focusSel) {
     saveShare();
     renderShare();
@@ -1244,8 +1332,37 @@
       shareChanged("[data-share-add]");
       return;
     }
+    if ((t = e.target.closest("[data-track-copy]"))) {
+      var link = share.links.filter(function (l) { return l.id === t.dataset.trackCopy; })[0];
+      if (link) copyText(link.url, t, "Copy");
+      return;
+    }
+    if ((t = e.target.closest("[data-track-del]"))) {
+      var gone = share.links.filter(function (l) { return l.id === t.dataset.trackDel; })[0];
+      if (gone && confirm("Forget the link for " + (gone.label || "this person") + "? It keeps working for them, but its visits won't be listed here.")) {
+        share.links = share.links.filter(function (l) { return l !== gone; });
+        saveShare();
+        renderTracked();
+      }
+      return;
+    }
     var act = e.target.closest("[data-share-act]");
     if (!act) return;
+    if (act.dataset.shareAct === "track") {
+      var lab = shareBody.querySelector('[data-track="label"]'), nm = shareBody.querySelector('[data-track="name"]');
+      if (!lab.value.trim()) { lab.focus(); lab.placeholder = "Name it first, e.g. Acme, Sam"; return; }
+      var id = newCode(), name = nm.value.trim().slice(0, 40);
+      share.links.push({ id: id, label: lab.value.trim().slice(0, 60), name: name, at: Date.now(),
+        url: shareLink() + "&k=" + id + (name ? "&n=" + encodeURIComponent(name) : "") });
+      saveShare();
+      lab.value = ""; nm.value = "";
+      renderTracked();
+      var first = shareBody.querySelector('[data-track-copy="' + id + '"]');
+      if (first) { first.focus(); copyText(share.links[share.links.length - 1].url, first, "Copy"); }
+      return;
+    }
+    if (act.dataset.shareAct === "refresh") { loadVisits(true); return; }
+    if (act.dataset.shareAct === "copyrule") { copyText(visitRule(), act, "Copy rule"); return; }
     if (act.dataset.shareAct === "reset") { share.repos = null; shareChanged(); return; }
     if (act.dataset.shareAct === "copy") {
       var url = shareLink(), done = function () { act.textContent = "Copied"; setTimeout(function () { act.textContent = "Copy link"; }, 1600); };
@@ -1377,7 +1494,10 @@
   discover();
   checkOverviews();
   LaunchpadSync.init({
-    change: function () { renderAccount(); renderFoot(); },
+    change: function () {
+      renderAccount(); renderFoot();
+      if (document.getElementById("sharePanel").open && LaunchpadSync.state.status !== "loading") loadVisits(true);
+    },
     getLocal: recentOpens,
     setLocal: function (opens) { save(KEY.opens, opens); renderStats(); },
     getPrefs: function () { return { prefs: prefsSnapshot(), at: load(KEY.prefsAt, 0) || 0 }; },

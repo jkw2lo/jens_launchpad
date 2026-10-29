@@ -90,6 +90,34 @@ Plain `showcase.html` shows every project with an overview. To fix a default lis
 
 An About page opened from a showcase leads back to that showcase, not to the launchpad.
 
+### Tracked links
+
+To see whether a link was opened, make a **tracked link** in the Share panel: name it for
+yourself (*Acme, Sam*) and, optionally, give a first name for the greeting. It opens on a
+welcome screen (*Hi Sam,* the title, a **See the projects** button); clicking the button
+records one visit, and the panel lists each link with its visit count and when it was last
+opened. The link carries only a random code (`&k=7f3a9c`), never your label.
+
+A visit is a document in `showcase_visits` holding the code and the time, nothing else. It's
+written straight to Firestore's REST API, so visitors don't load the Firebase SDK. Coming
+back in the same tab (from an About page, say) doesn't count again. Someone with a blocker
+that stops requests to Google won't be counted.
+
+**One-time setup:** sign in under Sync, open Share, and the panel shows the rule with your
+account's uid filled in. Paste it in the Firebase console → Firestore Database → Rules, next
+to the `launchpad` rule, then Publish:
+
+```
+match /showcase_visits/{visit} {
+  allow create: if request.resource.data.keys().hasOnly(['k', 'at'])
+    && request.resource.data.k is string && request.resource.data.k.size() <= 24
+    && request.resource.data.at is timestamp
+    && request.resource.data.at > request.time - duration.value(10, 'm')
+    && request.resource.data.at < request.time + duration.value(10, 'm');
+  allow read: if request.auth != null && request.auth.uid == "YOUR-UID";
+}
+```
+
 ## Sync (launch counts and settings across devices)
 
 Sign in under Customize → Sync with Google or GitHub. This uses the shared Firebase

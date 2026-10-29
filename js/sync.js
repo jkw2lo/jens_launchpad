@@ -20,6 +20,11 @@
          allow read, write: if request.auth != null && request.auth.uid == uid;
        }
 
+   Showcase visits (showcase.html's welcome button) are kept in showcase_visits,
+   one document per visit: { k: the tracked link's code, at: when }. Anyone can add
+   one; only you can read them. The rule, with your account's uid in it, is shown
+   under Customize → Share once you're signed in.
+
    Because Groundwork lives on the same site (jkw2lo.github.io) and uses the
    same project, signing in to one signs in to the other on that device.
    ========================================================= */
@@ -112,7 +117,7 @@
         docRef = null;
         if (!user) { state.user = null; return set("out"); }
         try { localStorage.setItem(SEEN, "1"); } catch (e) {}
-        state.user = { name: user.displayName || "", email: user.email || "" };
+        state.user = { uid: user.uid, name: user.displayName || "", email: user.email || "" };
         set("loading");
         docRef = fb.firestore().collection(COLLECTION).doc(user.uid);
         var ref = docRef;
@@ -192,6 +197,18 @@
       var patch = { opens: {} };
       patch.opens[id] = window.firebase.firestore.FieldValue.arrayUnion(t);
       docRef.set(patch, { merge: true }).catch(function () {});
+    },
+    // Every recorded showcase visit, newest first: [{ k, at }] with at in ms.
+    // Rejects with { code } when signed out, or when the read rule isn't in place.
+    visits: function () {
+      if (state.status !== "in" || !window.firebase) return Promise.reject({ code: "signed-out" });
+      return window.firebase.firestore().collection("showcase_visits").orderBy("at", "desc").limit(1000).get()
+        .then(function (snap) {
+          return snap.docs.map(function (d) {
+            var v = d.data(), at = v.at && v.at.toMillis ? v.at.toMillis() : 0;
+            return { k: String(v.k || ""), at: at };
+          });
+        });
     },
     // Replace the account's settings with this device's.
     pushPrefs: function (prefs, at) {
