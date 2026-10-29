@@ -245,7 +245,7 @@ button { font: inherit; color: inherit; }
   padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 32px max(16px, env(safe-area-inset-left));
 }
 @media (min-width: 700px) {
-  .page { padding: 52px 32px 48px; }
+  .page { padding: max(52px, env(safe-area-inset-top)) max(32px, env(safe-area-inset-right)) max(48px, env(safe-area-inset-bottom)) max(32px, env(safe-area-inset-left)); }
 }
 body.editing .page { padding-bottom: 110px; }
 
@@ -1108,6 +1108,13 @@ body.picking .tray-label { border-color: var(--focus); color: var(--ink); }
   .editing .board .move .hide { width: 22px; height: 22px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); }
   .editing .board .move .hide svg { width: 12px; height: 12px; }
   .editing .grid.board .tile-link { padding: 8px 6px; }
+}
+
+/* ---------- installed as an app ---------- */
+/* No browser around it, so a long press on a tile shouldn't pop up the link menu, and pages don't bounce or pull-to-refresh. */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  body { overscroll-behavior-y: none; }
+  .tile-link, .about { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
 }
 
 /* ---------- footer ---------- */

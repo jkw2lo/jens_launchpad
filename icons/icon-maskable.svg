@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full-bleed background; the mark stays inside the central safe zone so any launcher mask keeps it whole. -->
+  <rect width="512" height="512" fill="#f3f4f6"/>
+  <rect x="146" y="146" width="104" height="104" rx="25" fill="#4f6bff"/>
+  <rect x="262" y="146" width="104" height="104" rx="52" fill="#ff5fa2"/>
+  <rect x="146" y="262" width="104" height="104" rx="52" fill="#ffb703"/>
+  <rect x="262" y="262" width="104" height="104" rx="25" fill="#1d1b33"/>
+</svg>

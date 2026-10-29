@@ -46,6 +46,25 @@ Order, box and look are saved in this browser's localStorage, and also in your
 account when you're signed in. Keys are prefixed `jens_launchpad:` because every project on
 `jkw2lo.github.io` shares the same storage. You can link to a style directly with `?skin=brutal`.
 
+## Install as an app (Android tablet, phone, iPad, desktop)
+
+The launchpad is an installable web app, so it can sit on a tablet's home screen
+like any other app, without going through an app store:
+
+1. On the tablet, open **https://jkw2lo.github.io/jens_launchpad/** in Chrome.
+2. Tap **Customize → App → Install app** (or Chrome's **⋮ → Add to home screen → Install**).
+
+It gets its own icon in the app drawer, opens full screen without the browser bar,
+and still opens offline (it shows the last copy it loaded). Tapping a project opens
+it inside the app window with a small bar on top; its **✕** brings you back to the
+launchpad. Updates arrive on their own: the app always loads the newest version when
+it's online. On an iPad it's Safari → **Share → Add to Home Screen**.
+
+How it works: `manifest.webmanifest` names the app and its icons (`icons/`, drawn
+from `icons/icon.svg` and `icons/icon-maskable.svg`), and `sw.js` is a service
+worker that caches the launchpad's own files, network first. It only touches files
+under `/jens_launchpad/`, never the other projects.
+
 ## New projects
 
 **Any new repo with a GitHub Pages site shows up automatically.** The page
@@ -180,6 +199,7 @@ overview.html     the overview page shared by every project (reads <repo>/overvi
 showcase.html     the gallery to share with other people (Customize → Share makes the link)
 OVERVIEW.md       the overview format, and how to write one
 tools/shoot.mjs   takes an overview's screenshots (clicks through the app, crops to a feature)
+manifest.webmanifest, sw.js, icons/   what makes it installable as an app
 js/projects.js    the project list + icons
 js/app.js         rendering, reordering, the box, open counts, look, About links
 js/sync.js        optional sign-in + launch-count sync (Firebase)

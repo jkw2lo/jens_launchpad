@@ -1519,6 +1519,38 @@
     else if (b.hasAttribute("data-signout")) LaunchpadSync.signOut();
   });
 
+  // ---------- app (install on this device) ----------
+  var appBody = document.getElementById("appBody");
+  var standalone = window.matchMedia("(display-mode: standalone), (display-mode: fullscreen)");
+  function renderApp() {
+    var ua = navigator.userAgent, html;
+    if (standalone.matches || navigator.standalone) {
+      html = '<p class="account-line"><span class="dot on" aria-hidden="true"></span>Running as an app on this device.</p>';
+    } else if (window.installPrompt) {
+      html = '<div class="account-actions"><button type="button" class="btn small" data-install>Install app</button></div>' +
+        '<p class="account-note">Adds Launchpad to the home screen and app list. It opens full screen, without the browser bar, and works offline.</p>';
+    } else if (/iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) {
+      html = '<p class="account-note">In Safari, tap <b>Share</b> → <b>Add to Home Screen</b>.</p>';
+    } else if (/Android/.test(ua)) {
+      html = '<p class="account-note">In Chrome, tap <b>⋮</b> → <b>Add to home screen</b> → <b>Install</b>.</p>';
+    } else {
+      html = '<p class="account-note">In Chrome or Edge, use the install icon at the right of the address bar, or the menu → <b>Install</b>.</p>';
+    }
+    appBody.innerHTML = html;
+  }
+  appBody.addEventListener("click", function (e) {
+    if (!e.target.closest("[data-install]") || !window.installPrompt) return;
+    var p = window.installPrompt;
+    window.installPrompt = null;
+    p.prompt();
+    // A prompt works once; if it's dismissed, Chrome offers a fresh one later through "installable".
+    p.userChoice.then(renderApp, renderApp);
+  });
+  document.addEventListener("installable", renderApp);
+  window.addEventListener("appinstalled", function () { window.installPrompt = null; renderApp(); });
+  if (standalone.addEventListener) standalone.addEventListener("change", renderApp);
+  renderApp();
+
   // Settings sync: stamp every local change, push it (batched), and take a
   // newer copy from another device when one arrives.
   var pushTimer = 0;
