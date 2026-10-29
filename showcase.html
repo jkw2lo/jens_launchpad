@@ -18,6 +18,8 @@
       &w=1                              open on a welcome screen
       &k=code  &n=Name                  a tracked link: the welcome screen's button also records
                                         one visit (the code and the time, nothing else)
+      showcase.html?code                a short tracked link: everything above is saved under the
+                                        code in Firestore's showcase_links, readable by its code
     Make a link from the launchpad: Customize → Share.
   -->
   <style>
@@ -157,12 +159,36 @@
     <ul class="grid" id="grid" aria-live="polite"></ul>
   </div>
 
-  <script src="js/projects.js?v=202610291520"></script>
+  <script src="js/projects.js?v=202610291526"></script>
   <script>
   (function () {
     "use strict";
     var OWNER = window.GITHUB_USER || "";
-    var params = new URLSearchParams(location.search);
+    var DOCS = "https://firestore.googleapis.com/v1/projects/github-projects-5d4e4/databases/(default)/documents/";
+    var API_KEY = "AIzaSyBeIyBs3FtSx9T_wlJHsCqkfxZkhbX3Qhk";
+
+    // A short link (showcase.html?h0udkw) is just a code; its settings are saved in
+    // showcase_links/{code}, which anyone with the code can read (and nobody can list).
+    var short = /^[a-z0-9]{4,24}$/i.test(location.search.slice(1)) ? location.search.slice(1) : "";
+    if (!short) start(new URLSearchParams(location.search));
+    else fetch(DOCS + "showcase_links/" + short + "?key=" + API_KEY)
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (doc) {
+        var f = doc.fields || {}, q = new URLSearchParams();
+        var sv = function (x) { return (x && x.stringValue) || ""; };
+        var p = ((f.p && f.p.arrayValue && f.p.arrayValue.values) || []).map(sv).filter(Boolean);
+        if (p.length) q.set("p", p.join(","));
+        ["t", "i", "v", "n"].forEach(function (k) { if (sv(f[k])) q.set(k, sv(f[k])); });
+        if (f.w && f.w.booleanValue) q.set("w", "1");
+        q.set("k", short);
+        start(q);
+      })
+      .catch(function () {
+        document.getElementById("title").textContent = "Link not found";
+        document.getElementById("grid").innerHTML = '<li class="empty">This link isn\'t available any more.</li>';
+      });
+
+    function start(params) {
     var byRepo = {};
     (window.PROJECTS || []).forEach(function (p) { byRepo[p.repo] = p; });
 
@@ -274,8 +300,7 @@
     // Coming back in the same tab (say from an About page) skips the card and isn't counted again.
     var code = (params.get("k") || "").replace(/[^a-z0-9]/gi, "").slice(0, 24);
     var greet = str(params.get("n"), 40);
-    var FIRESTORE = "https://firestore.googleapis.com/v1/projects/github-projects-5d4e4/databases/(default)/documents/showcase_visits" +
-      "?key=AIzaSyBeIyBs3FtSx9T_wlJHsCqkfxZkhbX3Qhk";
+    var FIRESTORE = DOCS + "showcase_visits?key=" + API_KEY;
     var seenKey = "showcase:seen:" + (code || location.search), seen = false;
     try { seen = sessionStorage.getItem(seenKey) === "1"; } catch (e) {}
     function recordVisit() {
@@ -318,6 +343,7 @@
         document.getElementById("go").innerHTML = "See the " + (shown.length === 1 ? "project" : shown.length + " projects") + " " + ARROW;
       }
     });
+    }
   })();
   </script>
 </body>

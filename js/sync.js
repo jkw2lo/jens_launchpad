@@ -22,8 +22,10 @@
 
    Showcase visits (showcase.html's welcome button) are kept in showcase_visits,
    one document per visit: { k: the tracked link's code, at: when }. Anyone can add
-   one; only you can read them. The rule, with your account's uid in it, is shown
-   under Customize → Share once you're signed in.
+   one; only you can read them. Short tracked links (showcase.html?code) keep their
+   settings in showcase_links/{code}: anyone with a code can read that one, only you
+   can write. The rules, with your account's uid in them, are shown under
+   Customize → Share once you're signed in.
 
    Because Groundwork lives on the same site (jkw2lo.github.io) and uses the
    same project, signing in to one signs in to the other on that device.
@@ -209,6 +211,13 @@
             return { k: String(v.k || ""), at: at };
           });
         });
+    },
+    // Save a short link's settings under its code: { p: [repos], t, i, v, w, n }
+    saveLink: function (id, data) {
+      if (state.status !== "in" || !window.firebase) return Promise.reject({ code: "signed-out" });
+      var doc = JSON.parse(JSON.stringify(data));
+      doc.at = window.firebase.firestore.FieldValue.serverTimestamp();
+      return window.firebase.firestore().collection("showcase_links").doc(id).set(doc);
     },
     // Replace the account's settings with this device's.
     pushPrefs: function (prefs, at) {

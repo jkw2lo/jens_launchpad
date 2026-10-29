@@ -1155,7 +1155,7 @@
         return l && typeof l.id === "string" && typeof l.url === "string";
       }).map(function (l) {
         return { id: l.id.slice(0, 24), label: String(l.label || "").slice(0, 60), name: String(l.name || "").slice(0, 40),
-          title: String(l.title || "").slice(0, 80), url: l.url, at: +l.at || 0 };
+          title: String(l.title || "").slice(0, 80), url: l.url, short: !!l.short, at: +l.at || 0 };
       }) : []
     };
   }
@@ -1225,7 +1225,7 @@
         (share.repos ? '<button type="button" class="btn small ghost" data-share-act="reset">Back to everything with an overview</button>' : "") +
       "</div>" +
       '<div class="share-sub"><span class="field-label">Tracked links</span>' +
-        '<span class="share-hint">Each opens on the welcome screen, and its button records a visit</span></div>' +
+        '<span class="share-hint">Each opens on the welcome screen, and its button records a visit. Signed in, links come out short.</span></div>' +
       '<div class="share-track">' +
         '<label>Who it\'s for <span class="share-hint">only you see this</span>' +
           '<input data-track="label" maxlength="60" placeholder="e.g. Acme, Sam (recruiter)"></label>' +
@@ -1261,8 +1261,16 @@
       renderTracked();
     });
   }
+  var linkRuleMissing = false;
+  function myUid() { return (LaunchpadSync.state.user && LaunchpadSync.state.user.uid) || "YOUR-UID"; }
+  function linkRule() {
+    return "match /showcase_links/{link} {\n" +
+      "  allow get: if true;\n" +
+      "  allow create, update, delete: if request.auth != null && request.auth.uid == \"" + myUid() + "\";\n" +
+      "}";
+  }
   function visitRule() {
-    var uid = (LaunchpadSync.state.user && LaunchpadSync.state.user.uid) || "YOUR-UID";
+    var uid = myUid();
     return "match /showcase_visits/{visit} {\n" +
       "  allow create: if request.resource.data.keys().hasOnly(['k', 'at'])\n" +
       "    && request.resource.data.k is string && request.resource.data.k.size() <= 24\n" +
@@ -1282,6 +1290,7 @@
   function renderTracked() {
     var box = document.getElementById("shareTracked");
     if (!box) return;
+    var signedIn = window.LaunchpadSync && LaunchpadSync.state.status === "in";
     var rows = share.links.slice().sort(function (a, b) { return b.at - a.at; }).map(function (l) {
       var v = visits.by[l.id], seen;
       if (visits.status === "ok") seen = v ? "<b>" + v.n + (v.n === 1 ? " visit" : " visits") + "</b> · last " + when(v.last) : "Not opened yet";
@@ -1290,6 +1299,7 @@
         '<span class="tl-meta">' + (l.name ? "Greets " + esc(l.name) : "General welcome") +
           (l.title && l.title !== share.title ? " · “" + esc(l.title) + "”" : "") + " · made " + when(l.at) + "</span></div>" +
         '<span class="tl-seen">' + seen + "</span>" +
+        (!l.short && signedIn ? '<button type="button" class="btn small ghost" data-track-shorten="' + esc(l.id) + '">Shorten</button>' : "") +
         '<button type="button" class="btn small" data-track-copy="' + esc(l.id) + '">Copy</button>' +
         '<a class="btn small ghost" href="' + esc(l.url) + '" target="_blank" rel="noopener">Open</a>' +
         '<button type="button" class="tl-del" data-track-del="' + esc(l.id) + '" aria-label="Forget the link for ' + esc(l.label) + '">' + SVG.close + "</button></li>";
@@ -1299,12 +1309,34 @@
     else if (visits.status === "no-rule") status = "One step to see visits: in the Firebase console (project github-projects-5d4e4) open " +
       "Firestore → Rules, paste this next to the launchpad rule, and Publish.";
     else if (visits.status === "error") status = "Couldn't load visits: " + esc(visits.msg);
+    if (linkRuleMissing) status = (status ? status + " " : "") + "Short links need one more rule: paste this in the Firebase console " +
+      "(project github-projects-5d4e4) under Firestore → Rules, next to the others, and Publish.";
+    var rules = (visits.status === "no-rule" ? [visitRule()] : []).concat(linkRuleMissing ? [linkRule()] : []).join("\n\n");
     box.innerHTML = (rows ? '<ul class="share-tracked">' + rows + "</ul>" : "") +
       (status ? '<p class="share-note">' + status + "</p>" : "") +
-      (visits.status === "no-rule" ? '<pre class="share-rule">' + esc(visitRule()) + "</pre>" +
+      (rules ? '<pre class="share-rule">' + esc(rules) + "</pre>" +
         '<div class="share-link"><button type="button" class="btn small" data-share-act="copyrule">Copy rule</button>' +
         '<button type="button" class="btn small ghost" data-share-act="refresh">I\'ve added it</button></div>' : "") +
       (rows && visits.status === "ok" ? '<button type="button" class="btn small ghost" data-share-act="refresh">Refresh visits</button>' : "");
+  }
+  // Short links: the settings a long link carries, saved under its code
+  function shortUrl(id) { return new URL("showcase.html", location.href).href.split("?")[0] + "?" + id; }
+  function linkData(url) {
+    var q = new URL(url, location.href).searchParams;
+    return {
+      p: (q.get("p") || "").split(",").filter(Boolean), t: q.get("t") || "", i: q.get("i") || "",
+      v: q.get("v") || "grid", w: q.get("w") === "1", n: q.get("n") || ""
+    };
+  }
+  function shorten(link) {
+    return LaunchpadSync.saveLink(link.id, linkData(link.url)).then(function () {
+      link.url = shortUrl(link.id);
+      link.short = true;
+      linkRuleMissing = false;
+      saveShare();
+    }, function (e) {
+      if (/permission/.test((e && e.code) || "")) linkRuleMissing = true;
+    }).then(renderTracked);
   }
   function newCode() {
     var a = new Uint8Array(6);
@@ -1355,6 +1387,11 @@
       if (link) copyText(link.url, t, "Copy");
       return;
     }
+    if ((t = e.target.closest("[data-track-shorten]"))) {
+      var long = share.links.filter(function (l) { return l.id === t.dataset.trackShorten; })[0];
+      if (long) { t.textContent = "Shortening…"; shorten(long); }
+      return;
+    }
     if ((t = e.target.closest("[data-track-del]"))) {
       var gone = share.links.filter(function (l) { return l.id === t.dataset.trackDel; })[0];
       if (gone && confirm("Forget the link for " + (gone.label || "this person") + "? It keeps working for them, but its visits won't be listed here.")) {
@@ -1376,13 +1413,25 @@
         url: shareLink(own) + (share.welcome ? "" : "&w=1") + "&k=" + id + (name ? "&n=" + encodeURIComponent(name) : "") });
       saveShare();
       lab.value = ""; nm.value = ""; f("title").value = share.title; f("intro").value = share.intro;
-      renderTracked();
-      var first = shareBody.querySelector('[data-track-copy="' + id + '"]');
-      if (first) { first.focus(); copyText(share.links[share.links.length - 1].url, first, "Copy"); }
+      var made = share.links[share.links.length - 1];
+      var copyIt = function () {
+        renderTracked();
+        var first = shareBody.querySelector('[data-track-copy="' + id + '"]');
+        if (first) { first.focus(); copyText(made.url, first, "Copy"); }
+      };
+      if (LaunchpadSync.state.status === "in") shorten(made).then(copyIt); else copyIt();
       return;
     }
-    if (act.dataset.shareAct === "refresh") { loadVisits(true); return; }
-    if (act.dataset.shareAct === "copyrule") { copyText(visitRule(), act, "Copy rule"); return; }
+    if (act.dataset.shareAct === "refresh") {
+      loadVisits(true);
+      // retry any short link that failed for want of its rule
+      if (linkRuleMissing) share.links.filter(function (l) { return !l.short; }).slice(0, 1).forEach(shorten);
+      return;
+    }
+    if (act.dataset.shareAct === "copyrule") {
+      copyText((visits.status === "no-rule" ? [visitRule()] : []).concat(linkRuleMissing ? [linkRule()] : []).join("\n\n"), act, "Copy rule");
+      return;
+    }
     if (act.dataset.shareAct === "reset") { share.repos = null; shareChanged(); return; }
     if (act.dataset.shareAct === "copy") {
       var url = shareLink(), done = function () { act.textContent = "Copied"; setTimeout(function () { act.textContent = "Copy link"; }, 1600); };

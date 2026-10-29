@@ -103,6 +103,22 @@ with its visit count and when it was last opened. The link carries only a random
 **Opens on → A welcome screen** gives ordinary links the same welcome screen (`&w=1`), so a
 tracked link looks like any other link.
 
+**Short links.** Signed in, a tracked link comes out short (`showcase.html?h0udkw`): its
+settings are saved under the code in `showcase_links`, which anyone with a code can read one
+at a time (nobody can list them) and only you can write. Older long links get a **Shorten**
+button, and keep working either way. It needs this rule too, next to the others:
+
+```
+match /showcase_links/{link} {
+  allow get: if true;
+  allow create, update, delete: if request.auth != null && request.auth.uid == "YOUR-UID";
+}
+```
+
+**Where the numbers are.** Customize → Share → Tracked links: each link shows its visits and
+when it was last opened (**Refresh visits** to update). The raw visits are in the Firebase
+console → Firestore Database → Data → `showcase_visits`.
+
 A visit is a document in `showcase_visits` holding the code and the time, nothing else. It's
 written straight to Firestore's REST API, so visitors don't load the Firebase SDK. Coming
 back in the same tab (from an About page, say) doesn't count again. Someone with a blocker
