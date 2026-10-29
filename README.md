@@ -94,7 +94,8 @@ An About page opened from a showcase leads back to that showcase, not to the lau
 
 To see whether a link was opened, make a **tracked link** in the Share panel: name it for
 yourself (*Acme, Sam*) and, optionally, give a first name for the greeting (leave it blank
-for a general welcome). It opens on a welcome screen (the greeting if any, the title, a **See
+for a general welcome). Each tracked link can have its own title and intro; they start out
+as the showcase's. It opens on a welcome screen (the greeting if any, the title, a **See
 the projects** button); clicking the button records one visit, and the panel lists each link
 with its visit count and when it was last opened. The link carries only a random code
 (`&k=7f3a9c`), never your label, and the page says nothing about tracking.

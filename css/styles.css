@@ -635,8 +635,19 @@ details[open] .chev { transform: rotate(180deg); }
 .share-link { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .share-link input { flex: 1 1 260px; font-weight: 500; font-size: 0.82rem; color: var(--ctrl-muted); }
 .share-note { margin: 0; font-size: 0.8rem; color: var(--ctrl-muted); }
-.share-track { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; }
+.share-track {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  padding: 14px;
+  background: var(--tray);
+  border: 1.5px dashed var(--dash);
+  border-radius: calc(var(--panel-radius) * 0.7);
+}
 @media (max-width: 699px) { .share-track { grid-template-columns: minmax(0, 1fr); } }
+.share-track label { display: grid; gap: 5px; font-size: 0.8rem; font-weight: 600; color: var(--ctrl-muted); }
+.share-track .share-hint { font-weight: 500; }
+.share-track .btn { justify-self: start; }
 .share-track input {
   min-width: 0;
   padding: 8px 12px;

@@ -1154,7 +1154,8 @@
       links: Array.isArray(v.links) ? v.links.filter(function (l) {
         return l && typeof l.id === "string" && typeof l.url === "string";
       }).map(function (l) {
-        return { id: l.id.slice(0, 24), label: String(l.label || "").slice(0, 60), name: String(l.name || "").slice(0, 40), url: l.url, at: +l.at || 0 };
+        return { id: l.id.slice(0, 24), label: String(l.label || "").slice(0, 60), name: String(l.name || "").slice(0, 40),
+          title: String(l.title || "").slice(0, 80), url: l.url, at: +l.at || 0 };
       }) : []
     };
   }
@@ -1168,10 +1169,13 @@
   }
   function sharedProjects() { var k = knownRepos(); return pickedRepos().map(function (r) { return k[r]; }); }
   function ownShare() { share.repos = pickedRepos(); }
-  function shareLink() {
+  // o.title / o.intro override the showcase's own, for a tracked link with its own wording
+  function shareLink(o) {
+    o = o || {};
+    var title = o.title != null ? o.title : share.title, intro = o.intro != null ? o.intro : share.intro;
     var q = "p=" + pickedRepos().map(encodeURIComponent).join(",");
-    if (share.title) q += "&t=" + encodeURIComponent(share.title);
-    if (share.intro) q += "&i=" + encodeURIComponent(share.intro);
+    if (title) q += "&t=" + encodeURIComponent(title);
+    if (intro) q += "&i=" + encodeURIComponent(intro);
     if (share.view !== "grid") q += "&v=" + share.view;
     if (share.welcome) q += "&w=1";
     return new URL("showcase.html", location.href).href.split("?")[0] + "?" + q;
@@ -1223,8 +1227,14 @@
       '<div class="share-sub"><span class="field-label">Tracked links</span>' +
         '<span class="share-hint">Each opens on the welcome screen, and its button records a visit</span></div>' +
       '<div class="share-track">' +
-        '<input data-track="label" maxlength="60" placeholder="Who it\'s for, only you see this" aria-label="Who the link is for">' +
-        '<input data-track="name" maxlength="40" placeholder="Greeting name (blank for a general welcome)" aria-label="Greeting name">' +
+        '<label>Who it\'s for <span class="share-hint">only you see this</span>' +
+          '<input data-track="label" maxlength="60" placeholder="e.g. Acme, Sam (recruiter)"></label>' +
+        '<label>Greeting name <span class="share-hint">blank for a general welcome</span>' +
+          '<input data-track="name" maxlength="40" placeholder="e.g. Sam"></label>' +
+        '<label>Title <span class="share-hint">for this link</span>' +
+          '<input data-track="title" maxlength="80" placeholder="Projects" value="' + esc(share.title) + '"></label>' +
+        '<label>Intro <span class="share-hint">for this link</span>' +
+          '<input data-track="intro" maxlength="280" placeholder="A line for whoever you send it to" value="' + esc(share.intro) + '"></label>' +
         '<button type="button" class="btn small primary" data-share-act="track">Make tracked link</button>' +
       "</div>" +
       '<div id="shareTracked"></div>';
@@ -1277,7 +1287,8 @@
       if (visits.status === "ok") seen = v ? "<b>" + v.n + (v.n === 1 ? " visit" : " visits") + "</b> · last " + when(v.last) : "Not opened yet";
       else seen = visits.status === "loading" ? "Checking…" : "";
       return '<li><div class="tl-main"><span class="tl-label">' + esc(l.label || "Untitled") + "</span>" +
-        '<span class="tl-meta">' + (l.name ? "Greets " + esc(l.name) : "General welcome") + " · made " + when(l.at) + "</span></div>" +
+        '<span class="tl-meta">' + (l.name ? "Greets " + esc(l.name) : "General welcome") +
+          (l.title && l.title !== share.title ? " · “" + esc(l.title) + "”" : "") + " · made " + when(l.at) + "</span></div>" +
         '<span class="tl-seen">' + seen + "</span>" +
         '<button type="button" class="btn small" data-track-copy="' + esc(l.id) + '">Copy</button>' +
         '<a class="btn small ghost" href="' + esc(l.url) + '" target="_blank" rel="noopener">Open</a>' +
@@ -1356,13 +1367,15 @@
     var act = e.target.closest("[data-share-act]");
     if (!act) return;
     if (act.dataset.shareAct === "track") {
-      var lab = shareBody.querySelector('[data-track="label"]'), nm = shareBody.querySelector('[data-track="name"]');
+      var f = function (k) { return shareBody.querySelector('[data-track="' + k + '"]'); };
+      var lab = f("label"), nm = f("name");
       if (!lab.value.trim()) { lab.focus(); lab.placeholder = "Name it first, e.g. Acme, Sam"; return; }
       var id = newCode(), name = nm.value.trim().slice(0, 40);
-      share.links.push({ id: id, label: lab.value.trim().slice(0, 60), name: name, at: Date.now(),
-        url: shareLink() + (share.welcome ? "" : "&w=1") + "&k=" + id + (name ? "&n=" + encodeURIComponent(name) : "") });
+      var own = { title: f("title").value.trim().slice(0, 80), intro: f("intro").value.trim().slice(0, 280) };
+      share.links.push({ id: id, label: lab.value.trim().slice(0, 60), name: name, title: own.title, at: Date.now(),
+        url: shareLink(own) + (share.welcome ? "" : "&w=1") + "&k=" + id + (name ? "&n=" + encodeURIComponent(name) : "") });
       saveShare();
-      lab.value = ""; nm.value = "";
+      lab.value = ""; nm.value = ""; f("title").value = share.title; f("intro").value = share.intro;
       renderTracked();
       var first = shareBody.querySelector('[data-track-copy="' + id + '"]');
       if (first) { first.focus(); copyText(share.links[share.links.length - 1].url, first, "Copy"); }

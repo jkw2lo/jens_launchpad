@@ -45,6 +45,8 @@
       }
     }
     * { box-sizing: border-box; }
+    /* hidden must win over the display set on .welcome and friends */
+    [hidden] { display: none !important; }
     html { -webkit-text-size-adjust: 100%; }
     body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.55 var(--font); -webkit-font-smoothing: antialiased; }
     a { color: inherit; }
@@ -94,6 +96,8 @@
     @media (min-width: 760px) {
       .grid.feature > .card:first-child { grid-column: 1 / -1; flex-direction: row; }
       .grid.feature > .card:first-child .shot { flex: 0 0 58%; aspect-ratio: auto; min-height: 340px; border-bottom: 0; border-right: 1px solid var(--line); }
+      .grid.feature > .card:first-child .shot.phone { display: flex; align-items: flex-end; justify-content: center; max-height: 460px; }
+      .grid.feature > .card:first-child .shot.phone img { height: auto; max-height: 420px; max-width: 60%; margin: 28px auto 0; }
       .grid.feature > .card:first-child .body { padding: 32px; justify-content: center; }
       .grid.feature > .card:first-child h2 { font-size: 1.7rem; }
       .grid.feature > .card:first-child .tagline { font-size: 1.1rem; }
@@ -153,7 +157,7 @@
     <ul class="grid" id="grid" aria-live="polite"></ul>
   </div>
 
-  <script src="js/projects.js?v=202610291504"></script>
+  <script src="js/projects.js?v=202610291519"></script>
   <script>
   (function () {
     "use strict";
