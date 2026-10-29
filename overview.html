@@ -210,16 +210,16 @@
 <body>
   <div class="page">
     <nav class="bar">
-      <a class="back" href="./">
+      <a class="back" id="back" href="./">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
-        Launchpad
+        <span id="backLabel">Launchpad</span>
       </a>
       <span class="bar-label">Project overview</span>
     </nav>
     <main id="main" aria-live="polite"></main>
   </div>
 
-  <script src="js/projects.js?v=202610161259"></script>
+  <script src="js/projects.js?v=202610291441"></script>
   <script>
   (function () {
     "use strict";
@@ -227,6 +227,16 @@
     var params = new URLSearchParams(location.search);
     var repo = params.get("p") || "";
     var src = params.get("src") || "";
+    // Opened from a showcase: every way back goes to that showcase, not the launchpad.
+    // Only a showcase link on this site is accepted.
+    var back = params.get("back") || "";
+    var fromShowcase = /^showcase\.html(\?[^#]*)?$/.test(back);
+    var backHref = fromShowcase ? back : "./";
+    if (fromShowcase) {
+      document.getElementById("back").setAttribute("href", backHref);
+      document.getElementById("backLabel").textContent = "All projects";
+    }
+    var site = fromShowcase ? "Jen" : "Jen's Launchpad";
     var OWNER = window.GITHUB_USER || "";
     var known = (window.PROJECTS || []).filter(function (p) { return p.repo === repo; })[0] || {};
     var cats = {};
@@ -260,9 +270,9 @@
     }
 
     function failed(title, why) {
-      document.title = "Overview not found · Jen's Launchpad";
+      document.title = "Overview not found · " + site;
       main.innerHTML = '<div class="card empty"><h1>' + esc(title) + "</h1><p>" + esc(why) + "</p>" +
-        '<a class="btn ghost" href="./">Back to the launchpad</a></div>';
+        '<a class="btn ghost" href="' + esc(backHref) + '">' + (fromShowcase ? "All projects" : "Back to the launchpad") + "</a></div>";
     }
 
     var jsonUrl;
@@ -293,7 +303,7 @@
       var accent = /^#[0-9a-f]{6}$/i.test(d.accent || "") ? d.accent : "#4f6bdc";
       document.documentElement.style.setProperty("--accent", accent);
       document.documentElement.style.setProperty("--on-accent", inkOn(accent));
-      document.title = name + " · Jen's Launchpad";
+      document.title = name + " · " + site;
 
       var appUrl = safeUrl(str(d.url, 300) || known.url || (repo ? "https://" + OWNER + ".github.io/" + repo + "/" : ""), location.href);
       var codeUrl = repo && OWNER ? "https://github.com/" + OWNER + "/" + repo : "";
@@ -377,7 +387,7 @@
       // 5. Footer
       html += '<div class="end">' +
         (appUrl ? '<a class="btn primary" href="' + esc(appUrl) + '">Open ' + esc(name) + " " + ARROW + "</a>" : "") +
-        '<a class="btn ghost" href="./">All projects</a></div>';
+        '<a class="btn ghost" href="' + esc(backHref) + '">All projects</a></div>';
 
       main.innerHTML = html;
     }

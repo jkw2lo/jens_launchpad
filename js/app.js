@@ -14,10 +14,11 @@
     layout: "jens_launchpad:layout", // single layout from before named layouts (migrated)
     layouts: "jens_launchpad:layouts",
     layoutUse: "jens_launchpad:layout-use", // which layout this device shows; not synced
-    overviews: "jens_launchpad:overviews" // which repos have an overview/overview.json
+    overviews: "jens_launchpad:overviews", // which repos have an overview/overview.json
+    share: "jens_launchpad:share" // the projects picked for showcase.html, its title and intro
   };
   // Settings that follow you across devices when signed in (last change wins).
-  var PREF_KEYS = [KEY.hidden, KEY.look, KEY.skin, KEY.layouts];
+  var PREF_KEYS = [KEY.hidden, KEY.look, KEY.skin, KEY.layouts, KEY.share];
   var SELF_REPO = "jens_launchpad";
   var OWNER = window.GITHUB_USER || "";
   var WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
@@ -576,6 +577,7 @@
   }
 
   function render() {
+    if (editing) renderShare();
     renderGrid();
     renderBox();
     renderStats();
@@ -1131,6 +1133,85 @@
     });
   }
 
+  // ---------- share: pick projects for the public showcase page ----------
+  // showcase.html is the page for other people. The picks are kept as repo names, the
+  // same names its link carries (showcase.html?p=a,b&t=…&i=…), so a link keeps working
+  // whatever happens here. Until you pick, it's every project with an overview.
+  var shareBody = document.getElementById("shareBody");
+  var share = normalizeShare(load(KEY.share, null));
+  function normalizeShare(v) {
+    v = v && typeof v === "object" ? v : {};
+    return {
+      repos: Array.isArray(v.repos) ? v.repos.filter(function (r) { return typeof r === "string"; }) : null,
+      title: typeof v.title === "string" ? v.title.slice(0, 80) : "",
+      intro: typeof v.intro === "string" ? v.intro.slice(0, 280) : ""
+    };
+  }
+  function sharePicked(p) { return share.repos ? share.repos.indexOf(p.repo) >= 0 : !!overviews.has[p.repo]; }
+  function shareable() { return fullOrder().map(function (id) { return byId[id]; }).filter(function (p) { return p && p.repo; }); }
+  function sharedProjects() { return shareable().filter(sharePicked); }
+  function shareLink() {
+    var q = "p=" + sharedProjects().map(function (p) { return encodeURIComponent(p.repo); }).join(",");
+    if (share.title) q += "&t=" + encodeURIComponent(share.title);
+    if (share.intro) q += "&i=" + encodeURIComponent(share.intro);
+    return new URL("showcase.html", location.href).href.split("?")[0] + "?" + q;
+  }
+  var TICK = '<svg class="chip-tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  function renderShare() {
+    var all = shareable(), n = sharedProjects().length;
+    shareBody.innerHTML =
+      '<div class="share-fields">' +
+        '<label>Title<input data-share-field="title" maxlength="80" placeholder="Projects" value="' + esc(share.title) + '"></label>' +
+        '<label>Intro (optional)<input data-share-field="intro" maxlength="280" placeholder="A line for whoever you send it to" value="' + esc(share.intro) + '"></label>' +
+      "</div>" +
+      '<ul class="share-picks" aria-label="Projects to share">' + all.map(function (p) {
+        return '<li><button type="button" class="chip" data-share="' + esc(p.repo) + '" aria-pressed="' + sharePicked(p) + '">' +
+          '<span class="chip-icon">' + icon(p.icon) + "</span>" + esc(p.name) +
+          (overviews.has[p.repo] ? "" : ' <span class="chip-none">no overview</span>') + TICK + "</button></li>";
+      }).join("") + "</ul>" +
+      '<p class="share-note">' + n + " of " + all.length + " picked, shown in the order they sit on your launchpad. " +
+        "A project without an overview shows just its name and an Open button.</p>" +
+      '<div class="share-link">' +
+        '<input readonly aria-label="Showcase link" id="shareUrl" value="' + esc(shareLink()) + '">' +
+        '<button type="button" class="btn small primary" data-share-act="copy">Copy link</button>' +
+        '<a class="btn small" id="shareOpen" href="' + esc(shareLink()) + '" target="_blank" rel="noopener">Open</a>' +
+        (share.repos ? '<button type="button" class="btn small ghost" data-share-act="reset">Back to everything with an overview</button>' : "") +
+      "</div>";
+    document.getElementById("shareNote").textContent = n + (n === 1 ? " project" : " projects") + " on your showcase";
+  }
+  function saveShare() { save(KEY.share, share); }
+  shareBody.addEventListener("click", function (e) {
+    var chip = e.target.closest("[data-share]");
+    if (chip) {
+      if (!share.repos) share.repos = sharedProjects().map(function (p) { return p.repo; });
+      var r = chip.dataset.share, i = share.repos.indexOf(r);
+      if (i >= 0) share.repos.splice(i, 1); else share.repos.push(r);
+      saveShare();
+      renderShare();
+      var again = shareBody.querySelector('[data-share="' + r + '"]');
+      if (again) again.focus();
+      return;
+    }
+    var act = e.target.closest("[data-share-act]");
+    if (!act) return;
+    if (act.dataset.shareAct === "reset") { share.repos = null; saveShare(); renderShare(); return; }
+    if (act.dataset.shareAct === "copy") {
+      var url = shareLink(), done = function () { act.textContent = "Copied"; setTimeout(function () { act.textContent = "Copy link"; }, 1600); };
+      var field = document.getElementById("shareUrl");
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, function () { field.select(); });
+      else { field.select(); try { document.execCommand("copy"); done(); } catch (err) {} }
+    }
+  });
+  shareBody.addEventListener("input", function (e) {
+    var f = e.target.closest("[data-share-field]");
+    if (!f) return;
+    share[f.dataset.shareField] = f.value;
+    saveShare();
+    // Typing only refreshes the link, so the field keeps its focus
+    document.getElementById("shareUrl").value = shareLink();
+    document.getElementById("shareOpen").setAttribute("href", shareLink());
+  });
+
   // ---------- sync (sign in to count launches on every device) ----------
   var accountBody = document.getElementById("accountBody");
   function renderAccount() {
@@ -1164,7 +1245,7 @@
   // newer copy from another device when one arrives.
   var pushTimer = 0;
   function prefsSnapshot() {
-    return { hidden: hiddenIds(), look: look, skin: currentSkin(), layouts: layouts };
+    return { hidden: hiddenIds(), look: look, skin: currentSkin(), layouts: layouts, share: share };
   }
   function prefsChanged() {
     save(KEY.prefsAt, Date.now());
@@ -1179,6 +1260,7 @@
     applyingRemote = true;
     if (Array.isArray(p.hidden)) save(KEY.hidden, p.hidden);
     if (p.look) { look = normalizeLook(p.look); save(KEY.look, look); }
+    if (p.share) { share = normalizeShare(p.share); save(KEY.share, share); }
     if (p.skin && DEFAULT_LOOK[p.skin]) { root.dataset.skin = p.skin; save(KEY.skin, p.skin); }
     if (p.layouts || p.layout || p.order) {
       layouts = layoutsFrom(p.layouts, p.layout, p.order);

@@ -71,6 +71,22 @@ and its key features with screenshots. Every project's overview
 uses the same layout from this repo; only the words and screenshots live in the
 project's repo. See [OVERVIEW.md](OVERVIEW.md) for the format and how to write one.
 
+## Sharing a showcase
+
+`showcase.html` is the page to send other people: a gallery of projects, each with its
+screenshot, tagline and pitch, and Open and About buttons. No launch counts, no settings.
+
+Pick what goes on it under **Customize → Share**: tick projects, give it a title and an
+optional intro, then **Copy link**. The link carries the picks
+(`showcase.html?p=recipe_book,writers-blocks&t=…&i=…`), so you can make a different link for
+each audience, and a link you've sent keeps showing what it showed. Projects appear in the
+order they sit on your launchpad. The picks are saved, and synced when you're signed in.
+
+Plain `showcase.html` shows every project with an overview. To fix a default list instead, set
+`window.SHOWCASE = { title, intro, projects: ["repo", …] }` in `js/projects.js`.
+
+An About page opened from a showcase leads back to that showcase, not to the launchpad.
+
 ## Sync (launch counts and settings across devices)
 
 Sign in under Customize → Sync with Google or GitHub. This uses the shared Firebase
@@ -109,6 +125,7 @@ start anyway, a small fallback in `index.html` still lists every project as a pl
 ```
 index.html        page skeleton
 overview.html     the overview page shared by every project (reads <repo>/overview/overview.json)
+showcase.html     the gallery to share with other people (Customize → Share makes the link)
 OVERVIEW.md       the overview format, and how to write one
 tools/shoot.mjs   takes an overview's screenshots (clicks through the app, crops to a feature)
 js/projects.js    the project list + icons

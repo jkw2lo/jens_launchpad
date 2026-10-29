@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Projects · Jen</title>
+  <meta name="description" content="A selection of Jen's projects.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='12' height='12' rx='3' fill='%234f6bff'/%3E%3Crect x='18' y='2' width='12' height='12' rx='6' fill='%23ff5fa2'/%3E%3Crect x='2' y='18' width='12' height='12' rx='6' fill='%23ffb703'/%3E%3Crect x='18' y='18' width='12' height='12' rx='3' fill='%231d1b33'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!--
+    A gallery of projects for other people: no launch counts, no settings.
+      showcase.html                     every project that has an overview
+      showcase.html?p=a,b,c             just those repos, in that order
+      &t=Title  &i=A line of intro      optional heading and intro
+    Make a link from the launchpad: Customize → Share.
+  -->
+  <style>
+    :root {
+      --bg: #f6f5f2;
+      --card: #ffffff;
+      --ink: #15171b;
+      --muted: #62666f;
+      --line: rgba(21, 23, 27, 0.09);
+      --shadow: 0 1px 2px rgba(21, 23, 27, 0.04), 0 12px 32px -14px rgba(21, 23, 27, 0.18);
+      --shadow-hover: 0 2px 4px rgba(21, 23, 27, 0.05), 0 22px 44px -16px rgba(21, 23, 27, 0.26);
+      --font: "Manrope", system-ui, sans-serif;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111214;
+        --card: #1a1c20;
+        --ink: #eceef1;
+        --muted: #a0a5ae;
+        --line: rgba(236, 238, 241, 0.1);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -14px rgba(0, 0, 0, 0.6);
+        --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 22px 44px -16px rgba(0, 0, 0, 0.75);
+        color-scheme: dark;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.55 var(--font); -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    img { display: block; max-width: 100%; }
+    .page { max-width: 1160px; margin: 0 auto; padding: 48px 24px 64px; }
+    @media (max-width: 599px) { .page { padding: 28px 16px 40px; } }
+
+    header { margin-bottom: 32px; }
+    h1 { margin: 0; font-size: clamp(2rem, 1.5rem + 2.2vw, 3rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; }
+    .intro { margin: 12px 0 0; max-width: 60ch; color: var(--muted); font-size: 1.08rem; }
+    .count { margin: 10px 0 0; color: var(--muted); font-size: 0.85rem; font-weight: 600; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 22px; margin: 0; padding: 0; list-style: none; }
+    .card {
+      --accent: #4f6bdc;
+      display: flex; flex-direction: column; overflow: hidden;
+      background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow);
+      transition: transform 0.18s cubic-bezier(.2, .8, .2, 1), box-shadow 0.18s ease;
+    }
+    @media (hover: hover) { .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); } }
+    .shot {
+      position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden;
+      background: color-mix(in srgb, var(--accent) 12%, var(--card));
+      border-bottom: 1px solid var(--line);
+    }
+    .shot img { width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+    /* a phone screenshot sits whole in the middle rather than being cropped to a sliver */
+    .shot.phone img { width: auto; height: 92%; margin: 4% auto 0; object-fit: contain; border-radius: 14px 14px 0 0; box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.35); }
+    .shot.none { display: grid; place-items: center; }
+    .shot.none svg { width: 56px; height: 56px; fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .shot:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+
+    .body { display: flex; flex-direction: column; flex: 1; gap: 6px; padding: 20px 22px 22px; }
+    .top { display: flex; align-items: center; gap: 10px; }
+    .top h2 { margin: 0; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+    .pill { margin-left: auto; padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, var(--card)); color: color-mix(in srgb, var(--accent) 75%, var(--ink)); font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .tagline { margin: 0; color: color-mix(in srgb, var(--accent) 75%, var(--ink)); font-weight: 700; font-size: 0.95rem; }
+    .pitch { margin: 2px 0 0; color: var(--muted); font-size: 0.93rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 16px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 999px; border: 1.5px solid var(--line); font: 700 0.88rem/1 var(--font); text-decoration: none; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #fff); }
+    @media (hover: hover) { .btn.primary:hover { filter: brightness(1.08); } .btn.ghost:hover { background: var(--line); } }
+    .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+    .btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .empty { padding: 48px 24px; text-align: center; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 22px; }
+    @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1 id="title">Projects</h1>
+      <p class="intro" id="intro" hidden></p>
+      <p class="count" id="count"></p>
+    </header>
+    <ul class="grid" id="grid" aria-live="polite"></ul>
+  </div>
+
+  <script src="js/projects.js?v=202610291441"></script>
+  <script>
+  (function () {
+    "use strict";
+    var OWNER = window.GITHUB_USER || "";
+    var params = new URLSearchParams(location.search);
+    var byRepo = {};
+    (window.PROJECTS || []).forEach(function (p) { byRepo[p.repo] = p; });
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+    var str = function (v, max) { return typeof v === "string" ? v.trim().slice(0, max) : ""; };
+    var validRepo = function (r) { return /^[A-Za-z0-9._-]+$/.test(r); };
+    function safeUrl(u, base) {
+      try { var url = new URL(u, base); return /^https?:$/.test(url.protocol) ? url.href : ""; } catch (e) { return ""; }
+    }
+    function inkOn(hex) {
+      var n = parseInt(hex.slice(1), 16);
+      var rgb = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(function (v) {
+        v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2] > 0.4 ? "#15171b" : "#ffffff";
+    }
+    var svg = function (path) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + path + "</svg>"; };
+    var ARROW = svg('<path d="M5 12h14M13 6l6 6-6 6"/>');
+
+    // Which projects: ?p= wins, then window.SHOWCASE in projects.js, then every project
+    // with an overview (the ones without one are only included when named).
+    var named = (params.get("p") || "").split(",").map(function (s) { return s.trim(); }).filter(validRepo);
+    var preset = window.SHOWCASE || {};
+    if (!named.length && Array.isArray(preset.projects)) named = preset.projects.filter(validRepo);
+    var everything = !named.length;
+    var repos = everything ? (window.PROJECTS || []).map(function (p) { return p.repo; }) : named;
+
+    var title = str(params.get("t"), 80) || str(preset.title, 80) || "Projects";
+    var intro = str(params.get("i"), 280) || str(preset.intro, 280);
+    document.getElementById("title").textContent = title;
+    document.title = title;
+    if (intro) { var el = document.getElementById("intro"); el.textContent = intro; el.hidden = false; }
+
+    // Discovered repos aren't in projects.js; for "everything", ask GitHub for the rest,
+    // using the launchpad's cached list when this browser has one.
+    function allRepos() {
+      if (!everything || !OWNER) return Promise.resolve(repos);
+      var cached = null;
+      try { cached = JSON.parse(localStorage.getItem("jens_launchpad:repos")); } catch (e) {}
+      var list = cached && Array.isArray(cached.list) ? Promise.resolve(cached.list)
+        : fetch("https://api.github.com/users/" + encodeURIComponent(OWNER) + "/repos?per_page=100")
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .then(function (l) { return l.filter(function (r) { return r.has_pages && !r.fork && !r.archived; }).map(function (r) { return { name: r.name }; }); })
+            .catch(function () { return []; });
+      return list.then(function (l) {
+        l.forEach(function (r) { if (repos.indexOf(r.name) < 0 && r.name !== "jens_launchpad") repos.push(r.name); });
+        return repos;
+      });
+    }
+
+    // A repo with neither an overview nor a projects.js entry still gets its GitHub
+    // description as a tagline, as it does on the launchpad.
+    var pretty = function (n) { return n.replace(/[-_]+/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); }); };
+    function describe(repo) {
+      if (byRepo[repo] || !OWNER) return Promise.resolve("");
+      return fetch("https://api.github.com/repos/" + encodeURIComponent(OWNER) + "/" + encodeURIComponent(repo))
+        .then(function (r) { return r.ok ? r.json() : {}; }, function () { return {}; })
+        .then(function (j) { return typeof j.description === "string" ? j.description : ""; });
+    }
+    function load(repo) {
+      return fetch("../" + repo + "/overview/overview.json", { cache: "no-cache" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; })
+        .then(function (d) {
+          if (d) return { repo: repo, d: d };
+          return describe(repo).then(function (desc) { return { repo: repo, d: null, desc: desc }; });
+        });
+    }
+
+    var here = location.pathname.split("/").pop() + location.search;
+    function card(x) {
+      var p = byRepo[x.repo] || {}, d = x.d || {};
+      var name = str(d.name, 60) || p.name || pretty(x.repo);
+      var tagline = str(d.tagline, 60) || p.blurb || str(x.desc, 120);
+      var accent = /^#[0-9a-f]{6}$/i.test(d.accent || "") ? d.accent : "#4f6bdc";
+      var open = p.url || "https://" + OWNER + ".github.io/" + x.repo + "/";
+      var about = x.d ? "overview.html?p=" + encodeURIComponent(x.repo) + "&back=" + encodeURIComponent(here) : "";
+      var shot = (Array.isArray(d.screens) && d.screens[0]) || null;
+      var src = shot && safeUrl(str(shot.src, 300), new URL("../" + x.repo + "/overview/", location.href).href);
+      var icon = window.ICONS && (window.ICONS[p.icon] || window.ICONS.spark);
+      var picture = src
+        ? '<img src="' + esc(src) + '" alt="' + esc(str(shot.alt, 200)) + '" loading="lazy">'
+        : (icon ? svg(icon) : "");
+      var shotTag = about ? "a" : "div";
+      return '<li class="card" style="--accent:' + accent + ";--on-accent:" + inkOn(accent) + '">' +
+        "<" + shotTag + ' class="shot' + (src ? (shot.frame === "phone" ? " phone" : "") : " none") + '"' +
+          (about ? ' href="' + esc(about) + '" aria-label="About ' + esc(name) + '"' : "") + ">" + picture + "</" + shotTag + ">" +
+        '<div class="body">' +
+          '<div class="top"><h2>' + esc(name) + "</h2>" + (str(d.status, 30) ? '<span class="pill">' + esc(str(d.status, 30)) + "</span>" : "") + "</div>" +
+          (tagline ? '<p class="tagline">' + esc(tagline) + "</p>" : "") +
+          (str(d.pitch) ? '<p class="pitch">' + esc(str(d.pitch, 200)) + "</p>" : "") +
+          '<div class="actions">' +
+            '<a class="btn primary" href="' + esc(open) + '">Open ' + ARROW + "</a>" +
+            (about ? '<a class="btn ghost" href="' + esc(about) + '">About</a>' : "") +
+          "</div>" +
+        "</div>" +
+      "</li>";
+    }
+
+    allRepos().then(function (list) { return Promise.all(list.map(load)); }).then(function (all) {
+      var shown = everything ? all.filter(function (x) { return x.d; }) : all;
+      var grid = document.getElementById("grid");
+      document.getElementById("count").textContent = shown.length ? shown.length + (shown.length === 1 ? " project" : " projects") : "";
+      grid.innerHTML = shown.length ? shown.map(card).join("") : '<li class="empty">Nothing to show here yet.</li>';
+    });
+  })();
+  </script>
+</body>
+</html>
