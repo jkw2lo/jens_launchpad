@@ -157,7 +157,7 @@
     <ul class="grid" id="grid" aria-live="polite"></ul>
   </div>
 
-  <script src="js/projects.js?v=202610291519"></script>
+  <script src="js/projects.js?v=202610291520"></script>
   <script>
   (function () {
     "use strict";
@@ -250,7 +250,8 @@
       var src = shot && safeUrl(str(shot.src, 300), new URL("../" + x.repo + "/overview/", location.href).href);
       var icon = window.ICONS && (window.ICONS[p.icon] || window.ICONS.spark);
       var picture = src
-        ? '<img src="' + esc(src) + '" alt="' + esc(str(shot.alt, 200)) + '" loading="lazy">'
+        // behind a welcome card, load the pictures now so the gallery is ready on the click
+        ? '<img src="' + esc(src) + '" alt="' + esc(str(shot.alt, 200)) + '" loading="' + (gate ? "eager" : "lazy") + '">'
         : (icon ? svg(icon) : "");
       var shotTag = about ? "a" : "div";
       return '<li class="card" style="--accent:' + accent + ";--on-accent:" + inkOn(accent) + '">' +
