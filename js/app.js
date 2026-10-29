@@ -1147,6 +1147,7 @@
     return {
       repos: Array.isArray(v.repos) ? v.repos.filter(function (r) { return typeof r === "string"; }) : null,
       view: SHARE_VIEWS.some(function (x) { return x[0] === v.view; }) ? v.view : "grid",
+      welcome: !!v.welcome, // open on the welcome screen, as tracked links do
       title: typeof v.title === "string" ? v.title.slice(0, 80) : "",
       intro: typeof v.intro === "string" ? v.intro.slice(0, 280) : "",
       // tracked links: { id (the k= code), label (yours only), name (the greeting), url, at }
@@ -1172,6 +1173,7 @@
     if (share.title) q += "&t=" + encodeURIComponent(share.title);
     if (share.intro) q += "&i=" + encodeURIComponent(share.intro);
     if (share.view !== "grid") q += "&v=" + share.view;
+    if (share.welcome) q += "&w=1";
     return new URL("showcase.html", location.href).href.split("?")[0] + "?" + q;
   }
   function renderShare() {
@@ -1189,6 +1191,10 @@
           return '<button type="button" data-share-view="' + v[0] + '" aria-pressed="' + (share.view === v[0]) + '">' + v[1] + "</button>";
         }).join("") + "</div>" +
         '<span class="share-hint">' + { grid: "Cards in rows", feature: "The first project gets a big card on top", list: "One project per row, picture beside the words" }[share.view] + "</span></div>" +
+      '<div class="share-views"><span class="field-label">Opens on</span><div class="seg" role="group" aria-label="What the link opens on">' +
+        '<button type="button" data-share-welcome="0" aria-pressed="' + !share.welcome + '">The projects</button>' +
+        '<button type="button" data-share-welcome="1" aria-pressed="' + share.welcome + '">A welcome screen</button></div>' +
+        '<span class="share-hint">Tracked links always open on it, so with this on they look the same as any other link</span></div>' +
       '<div class="share-sub"><span class="field-label">On the showcase · ' + picked.length + "</span>" +
         '<span class="share-hint">Drag to reorder, or use the arrows</span></div>' +
       (picked.length ? '<ol class="share-order" aria-label="Showcase order">' + picked.map(function (p, i) {
@@ -1215,10 +1221,10 @@
         (share.repos ? '<button type="button" class="btn small ghost" data-share-act="reset">Back to everything with an overview</button>' : "") +
       "</div>" +
       '<div class="share-sub"><span class="field-label">Tracked links</span>' +
-        '<span class="share-hint">Each opens on a welcome screen, and its button records a visit</span></div>' +
+        '<span class="share-hint">Each opens on the welcome screen, and its button records a visit</span></div>' +
       '<div class="share-track">' +
         '<input data-track="label" maxlength="60" placeholder="Who it\'s for, only you see this" aria-label="Who the link is for">' +
-        '<input data-track="name" maxlength="40" placeholder="First name for the greeting (optional)" aria-label="Greeting name">' +
+        '<input data-track="name" maxlength="40" placeholder="Greeting name (blank for a general welcome)" aria-label="Greeting name">' +
         '<button type="button" class="btn small primary" data-share-act="track">Make tracked link</button>' +
       "</div>" +
       '<div id="shareTracked"></div>';
@@ -1271,7 +1277,7 @@
       if (visits.status === "ok") seen = v ? "<b>" + v.n + (v.n === 1 ? " visit" : " visits") + "</b> · last " + when(v.last) : "Not opened yet";
       else seen = visits.status === "loading" ? "Checking…" : "";
       return '<li><div class="tl-main"><span class="tl-label">' + esc(l.label || "Untitled") + "</span>" +
-        '<span class="tl-meta">' + (l.name ? "Greets " + esc(l.name) + " · " : "") + "made " + when(l.at) + "</span></div>" +
+        '<span class="tl-meta">' + (l.name ? "Greets " + esc(l.name) : "General welcome") + " · made " + when(l.at) + "</span></div>" +
         '<span class="tl-seen">' + seen + "</span>" +
         '<button type="button" class="btn small" data-track-copy="' + esc(l.id) + '">Copy</button>' +
         '<a class="btn small ghost" href="' + esc(l.url) + '" target="_blank" rel="noopener">Open</a>' +
@@ -1314,6 +1320,7 @@
   shareBody.addEventListener("click", function (e) {
     var t;
     if ((t = e.target.closest("[data-share-view]"))) { share.view = t.dataset.shareView; shareChanged('[data-share-view="' + share.view + '"]'); return; }
+    if ((t = e.target.closest("[data-share-welcome]"))) { share.welcome = t.dataset.shareWelcome === "1"; shareChanged('[data-share-welcome="' + t.dataset.shareWelcome + '"]'); return; }
     if ((t = e.target.closest("[data-share-move]"))) {
       var r = t.dataset.repo, dir = +t.dataset.shareMove;
       moveShare(r, pickedRepos().indexOf(r) + dir);
@@ -1353,7 +1360,7 @@
       if (!lab.value.trim()) { lab.focus(); lab.placeholder = "Name it first, e.g. Acme, Sam"; return; }
       var id = newCode(), name = nm.value.trim().slice(0, 40);
       share.links.push({ id: id, label: lab.value.trim().slice(0, 60), name: name, at: Date.now(),
-        url: shareLink() + "&k=" + id + (name ? "&n=" + encodeURIComponent(name) : "") });
+        url: shareLink() + (share.welcome ? "" : "&w=1") + "&k=" + id + (name ? "&n=" + encodeURIComponent(name) : "") });
       saveShare();
       lab.value = ""; nm.value = "";
       renderTracked();

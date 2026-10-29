@@ -93,10 +93,14 @@ An About page opened from a showcase leads back to that showcase, not to the lau
 ### Tracked links
 
 To see whether a link was opened, make a **tracked link** in the Share panel: name it for
-yourself (*Acme, Sam*) and, optionally, give a first name for the greeting. It opens on a
-welcome screen (*Hi Sam,* the title, a **See the projects** button); clicking the button
-records one visit, and the panel lists each link with its visit count and when it was last
-opened. The link carries only a random code (`&k=7f3a9c`), never your label.
+yourself (*Acme, Sam*) and, optionally, give a first name for the greeting (leave it blank
+for a general welcome). It opens on a welcome screen (the greeting if any, the title, a **See
+the projects** button); clicking the button records one visit, and the panel lists each link
+with its visit count and when it was last opened. The link carries only a random code
+(`&k=7f3a9c`), never your label, and the page says nothing about tracking.
+
+**Opens on → A welcome screen** gives ordinary links the same welcome screen (`&w=1`), so a
+tracked link looks like any other link.
 
 A visit is a document in `showcase_visits` holding the code and the time, nothing else. It's
 written straight to Firestore's REST API, so visitors don't load the Firebase SDK. Coming

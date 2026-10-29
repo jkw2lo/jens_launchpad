@@ -15,8 +15,9 @@
       showcase.html?p=a,b,c             just those repos, in that order
       &t=Title  &i=A line of intro      optional heading and intro
       &v=grid | feature | list          the layout: cards, the first one large, or rows
-      &k=code  &n=Name                  a tracked link: a welcome screen first, and its button
-                                        records one visit (the code and the time, nothing else)
+      &w=1                              open on a welcome screen
+      &k=code  &n=Name                  a tracked link: the welcome screen's button also records
+                                        one visit (the code and the time, nothing else)
     Make a link from the launchpad: Customize → Share.
   -->
   <style>
@@ -128,7 +129,6 @@
     @media (hover: hover) { .go:hover { opacity: 0.88; } }
     .go:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
     .go svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-    .welcome-note { margin: 16px 0 0; color: var(--muted); font-size: 0.78rem; }
 
     .empty { padding: 48px 24px; text-align: center; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 22px; }
     @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
@@ -142,7 +142,6 @@
       <p class="intro" id="welcomeIntro" hidden></p>
       <div class="welcome-strip" id="welcomeStrip" aria-hidden="true"></div>
       <button type="button" class="go" id="go"></button>
-      <p class="welcome-note">Opening this lets Jen know the link was viewed. Nothing else about you is kept.</p>
     </div>
   </section>
   <div class="page" id="page">
@@ -154,7 +153,7 @@
     <ul class="grid" id="grid" aria-live="polite"></ul>
   </div>
 
-  <script src="js/projects.js?v=202610291458"></script>
+  <script src="js/projects.js?v=202610291504"></script>
   <script>
   (function () {
     "use strict";
@@ -265,14 +264,14 @@
       "</li>";
     }
 
-    // A tracked link (&k=) opens on a welcome card. Its button records one visit, straight
-    // to Firestore's REST API (no SDK for visitors), then shows the projects. Coming back
-    // in the same tab (say from an About page) skips the card and isn't counted again.
+    // &w=1 opens on a welcome card. On a tracked link (&k=) the card is the same, and its
+    // button also records one visit, straight to Firestore's REST API (no SDK for visitors).
+    // Coming back in the same tab (say from an About page) skips the card and isn't counted again.
     var code = (params.get("k") || "").replace(/[^a-z0-9]/gi, "").slice(0, 24);
     var greet = str(params.get("n"), 40);
     var FIRESTORE = "https://firestore.googleapis.com/v1/projects/github-projects-5d4e4/databases/(default)/documents/showcase_visits" +
       "?key=AIzaSyBeIyBs3FtSx9T_wlJHsCqkfxZkhbX3Qhk";
-    var seenKey = "showcase:seen:" + code, seen = false;
+    var seenKey = "showcase:seen:" + (code || location.search), seen = false;
     try { seen = sessionStorage.getItem(seenKey) === "1"; } catch (e) {}
     function recordVisit() {
       try {
@@ -282,7 +281,7 @@
         }).catch(function () {});
       } catch (e) {}
     }
-    var gate = code && !seen;
+    var gate = (code || params.get("w") === "1") && !seen;
     if (gate) {
       document.getElementById("page").hidden = true;
       document.getElementById("welcome").hidden = false;
@@ -291,7 +290,7 @@
       if (intro) { var wi = document.getElementById("welcomeIntro"); wi.textContent = intro; wi.hidden = false; }
       document.getElementById("go").innerHTML = "See the projects " + ARROW;
       document.getElementById("go").addEventListener("click", function () {
-        recordVisit();
+        if (code) recordVisit();
         try { sessionStorage.setItem(seenKey, "1"); } catch (e) {}
         document.getElementById("welcome").hidden = true;
         document.getElementById("page").hidden = false;
