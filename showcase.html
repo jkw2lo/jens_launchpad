@@ -14,6 +14,7 @@
       showcase.html                     every project that has an overview
       showcase.html?p=a,b,c             just those repos, in that order
       &t=Title  &i=A line of intro      optional heading and intro
+      &v=grid | feature | list          the layout: cards, the first one large, or rows
     Make a link from the launchpad: Customize → Share.
   -->
   <style>
@@ -86,6 +87,25 @@
     .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
     .btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
+    /* Featured: the first project gets a wide card across the top */
+    @media (min-width: 760px) {
+      .grid.feature > .card:first-child { grid-column: 1 / -1; flex-direction: row; }
+      .grid.feature > .card:first-child .shot { flex: 0 0 58%; aspect-ratio: auto; min-height: 340px; border-bottom: 0; border-right: 1px solid var(--line); }
+      .grid.feature > .card:first-child .body { padding: 32px; justify-content: center; }
+      .grid.feature > .card:first-child h2 { font-size: 1.7rem; }
+      .grid.feature > .card:first-child .tagline { font-size: 1.1rem; }
+      .grid.feature > .card:first-child .pitch { font-size: 1.02rem; }
+      .grid.feature > .card:first-child .actions { margin-top: 10px; }
+    }
+    /* List: one project per row, the picture beside the words */
+    .grid.list { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    @media (min-width: 700px) {
+      .grid.list > .card { flex-direction: row; }
+      .grid.list .shot { flex: 0 0 40%; aspect-ratio: 16 / 10; border-bottom: 0; border-right: 1px solid var(--line); }
+      .grid.list .body { padding: 24px 28px; justify-content: center; }
+      .grid.list .actions { margin-top: 8px; }
+    }
+
     .empty { padding: 48px 24px; text-align: center; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 22px; }
     @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
   </style>
@@ -100,7 +120,7 @@
     <ul class="grid" id="grid" aria-live="polite"></ul>
   </div>
 
-  <script src="js/projects.js?v=202610291441"></script>
+  <script src="js/projects.js?v=202610291451"></script>
   <script>
   (function () {
     "use strict";
@@ -138,6 +158,8 @@
     var repos = everything ? (window.PROJECTS || []).map(function (p) { return p.repo; }) : named;
 
     var title = str(params.get("t"), 80) || str(preset.title, 80) || "Projects";
+    var view = params.get("v") || preset.view || "grid";
+    if (view === "feature" || view === "list") document.getElementById("grid").classList.add(view);
     var intro = str(params.get("i"), 280) || str(preset.intro, 280);
     document.getElementById("title").textContent = title;
     document.title = title;

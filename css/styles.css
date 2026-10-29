@@ -446,7 +446,8 @@ details[open] .chev { transform: rotate(180deg); }
   cursor: pointer;
 }
 .seg button:hover { background: rgba(127, 127, 127, 0.12); }
-.seg button[aria-checked="true"] { background: var(--ctrl-on-bg); color: var(--ctrl-on-ink); }
+.seg button[aria-checked="true"],
+.seg button[aria-pressed="true"] { background: var(--ctrl-on-bg); color: var(--ctrl-on-ink); }
 .seg button:focus-visible,
 .pat:focus-visible,
 .colour:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
@@ -590,11 +591,46 @@ details[open] .chev { transform: rotate(180deg); }
 }
 .share-fields input:focus-visible,
 .share-link input:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.share-views { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.share-sub { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: -6px; }
+.share-hint { font-size: 0.78rem; color: var(--ctrl-muted); }
 .share-picks { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.share-picks .chip[aria-pressed="false"] { opacity: 0.55; }
-.share-picks .chip[aria-pressed="false"] .chip-tick { visibility: hidden; }
-.share-picks .chip[aria-pressed="true"] { background: color-mix(in srgb, var(--focus) 14%, var(--chip-bg)); }
-.chip-tick { width: 14px; height: 14px; stroke-width: 2.6; }
+.share-order { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; counter-reset: none; }
+.share-order li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: var(--chip-bg);
+  border: var(--ctrl-border);
+  border-radius: var(--ctrl-radius);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: grab;
+}
+.share-order li.dragging { opacity: 0.4; }
+.share-order li.drop-before { box-shadow: 0 -3px 0 var(--focus); }
+.share-order li.drop-after { box-shadow: 0 3px 0 var(--focus); }
+.share-grip svg { display: block; width: 16px; height: 16px; fill: var(--ctrl-muted); }
+.share-num { min-width: 1.4em; color: var(--ctrl-muted); font-variant-numeric: tabular-nums; text-align: right; }
+.share-name { flex: 1; min-width: 0; }
+.share-order button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  color: var(--ctrl-ink);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.share-order button:hover:not(:disabled) { background: rgba(127, 127, 127, 0.14); }
+.share-order button:disabled { opacity: 0.25; cursor: default; }
+.share-order button:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.share-order button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.share-order [data-share-move] svg { transform: rotate(90deg); }
 .chip-none { font-weight: 500; color: var(--ctrl-muted); font-size: 0.75rem; }
 .share-link { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .share-link input { flex: 1 1 260px; font-weight: 500; font-size: 0.82rem; color: var(--ctrl-muted); }

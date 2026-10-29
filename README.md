@@ -76,11 +76,14 @@ project's repo. See [OVERVIEW.md](OVERVIEW.md) for the format and how to write o
 `showcase.html` is the page to send other people: a gallery of projects, each with its
 screenshot, tagline and pitch, and Open and About buttons. No launch counts, no settings.
 
-Pick what goes on it under **Customize → Share**: tick projects, give it a title and an
-optional intro, then **Copy link**. The link carries the picks
-(`showcase.html?p=recipe_book,writers-blocks&t=…&i=…`), so you can make a different link for
-each audience, and a link you've sent keeps showing what it showed. Projects appear in the
-order they sit on your launchpad. The picks are saved, and synced when you're signed in.
+Pick what goes on it under **Customize → Share**: add projects from the chips, drag the list
+(or use its arrows) into the order you want, choose a layout, give it a title and an optional
+intro, then **Copy link**. Layouts: *Grid* (cards in rows), *Featured* (the first project gets a
+big card across the top) and *List* (one project per row). The link carries all of it
+(`showcase.html?p=recipe_book,writers-blocks&t=…&i=…&v=feature`), so you can make a different
+link for each audience, and a link you've sent keeps showing what it showed. The picks are
+saved, and synced when you're signed in. Until you change anything, it's every project with an
+overview, in launchpad order.
 
 Plain `showcase.html` shows every project with an overview. To fix a default list instead, set
 `window.SHOWCASE = { title, intro, projects: ["repo", …] }` in `js/projects.js`.

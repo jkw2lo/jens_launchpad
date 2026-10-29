@@ -1134,67 +1134,119 @@
   }
 
   // ---------- share: pick projects for the public showcase page ----------
-  // showcase.html is the page for other people. The picks are kept as repo names, the
-  // same names its link carries (showcase.html?p=a,b&t=…&i=…), so a link keeps working
-  // whatever happens here. Until you pick, it's every project with an overview.
+  // showcase.html is the page for other people. The picks are kept as repo names, in the
+  // showcase's own order, the same names its link carries (showcase.html?p=a,b&t=…&i=…&v=…),
+  // so a link keeps working whatever happens here. Until you change anything, it's every
+  // project with an overview, in launchpad order.
   var shareBody = document.getElementById("shareBody");
+  var SHARE_VIEWS = [["grid", "Grid"], ["feature", "Featured"], ["list", "List"]];
   var share = normalizeShare(load(KEY.share, null));
   function normalizeShare(v) {
     v = v && typeof v === "object" ? v : {};
     return {
       repos: Array.isArray(v.repos) ? v.repos.filter(function (r) { return typeof r === "string"; }) : null,
+      view: SHARE_VIEWS.some(function (x) { return x[0] === v.view; }) ? v.view : "grid",
       title: typeof v.title === "string" ? v.title.slice(0, 80) : "",
       intro: typeof v.intro === "string" ? v.intro.slice(0, 280) : ""
     };
   }
-  function sharePicked(p) { return share.repos ? share.repos.indexOf(p.repo) >= 0 : !!overviews.has[p.repo]; }
   function shareable() { return fullOrder().map(function (id) { return byId[id]; }).filter(function (p) { return p && p.repo; }); }
-  function sharedProjects() { return shareable().filter(sharePicked); }
+  function knownRepos() { var k = {}; shareable().forEach(function (p) { k[p.repo] = p; }); return k; }
+  // The showcase's order: yours once you've changed anything, else launchpad order
+  function pickedRepos() {
+    var k = knownRepos();
+    var list = share.repos || shareable().filter(function (p) { return overviews.has[p.repo]; }).map(function (p) { return p.repo; });
+    return list.filter(function (r) { return k[r]; });
+  }
+  function sharedProjects() { var k = knownRepos(); return pickedRepos().map(function (r) { return k[r]; }); }
+  function ownShare() { share.repos = pickedRepos(); }
   function shareLink() {
-    var q = "p=" + sharedProjects().map(function (p) { return encodeURIComponent(p.repo); }).join(",");
+    var q = "p=" + pickedRepos().map(encodeURIComponent).join(",");
     if (share.title) q += "&t=" + encodeURIComponent(share.title);
     if (share.intro) q += "&i=" + encodeURIComponent(share.intro);
+    if (share.view !== "grid") q += "&v=" + share.view;
     return new URL("showcase.html", location.href).href.split("?")[0] + "?" + q;
   }
-  var TICK = '<svg class="chip-tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   function renderShare() {
-    var all = shareable(), n = sharedProjects().length;
+    var picked = sharedProjects(), on = {};
+    picked.forEach(function (p) { on[p.repo] = true; });
+    var rest = shareable().filter(function (p) { return !on[p.repo]; });
+    var none = function (p) { return overviews.has[p.repo] ? "" : ' <span class="chip-none">no overview</span>'; };
     shareBody.innerHTML =
       '<div class="share-fields">' +
         '<label>Title<input data-share-field="title" maxlength="80" placeholder="Projects" value="' + esc(share.title) + '"></label>' +
         '<label>Intro (optional)<input data-share-field="intro" maxlength="280" placeholder="A line for whoever you send it to" value="' + esc(share.intro) + '"></label>' +
       "</div>" +
-      '<ul class="share-picks" aria-label="Projects to share">' + all.map(function (p) {
-        return '<li><button type="button" class="chip" data-share="' + esc(p.repo) + '" aria-pressed="' + sharePicked(p) + '">' +
-          '<span class="chip-icon">' + icon(p.icon) + "</span>" + esc(p.name) +
-          (overviews.has[p.repo] ? "" : ' <span class="chip-none">no overview</span>') + TICK + "</button></li>";
-      }).join("") + "</ul>" +
-      '<p class="share-note">' + n + " of " + all.length + " picked, shown in the order they sit on your launchpad. " +
-        "A project without an overview shows just its name and an Open button.</p>" +
+      '<div class="share-views"><span class="field-label">Layout</span><div class="seg" role="group" aria-label="Showcase layout">' +
+        SHARE_VIEWS.map(function (v) {
+          return '<button type="button" data-share-view="' + v[0] + '" aria-pressed="' + (share.view === v[0]) + '">' + v[1] + "</button>";
+        }).join("") + "</div>" +
+        '<span class="share-hint">' + { grid: "Cards in rows", feature: "The first project gets a big card on top", list: "One project per row, picture beside the words" }[share.view] + "</span></div>" +
+      '<div class="share-sub"><span class="field-label">On the showcase · ' + picked.length + "</span>" +
+        '<span class="share-hint">Drag to reorder, or use the arrows</span></div>' +
+      (picked.length ? '<ol class="share-order" aria-label="Showcase order">' + picked.map(function (p, i) {
+        return '<li draggable="true" data-order="' + esc(p.repo) + '">' +
+          '<span class="share-grip" aria-hidden="true">' + SVG.grip + "</span>" +
+          '<span class="share-num">' + (i + 1) + "</span>" +
+          '<span class="chip-icon">' + icon(p.icon) + "</span>" +
+          '<span class="share-name">' + esc(p.name) + none(p) + "</span>" +
+          '<button type="button" data-share-move="-1" data-repo="' + esc(p.repo) + '" aria-label="Move ' + esc(p.name) + ' up"' + (i ? "" : " disabled") + ">" + SVG.prev + "</button>" +
+          '<button type="button" data-share-move="1" data-repo="' + esc(p.repo) + '" aria-label="Move ' + esc(p.name) + ' down"' + (i < picked.length - 1 ? "" : " disabled") + ">" + SVG.next + "</button>" +
+          '<button type="button" data-share-remove="' + esc(p.repo) + '" aria-label="Take ' + esc(p.name) + ' off the showcase">' + SVG.close + "</button>" +
+        "</li>";
+      }).join("") + "</ol>" : '<p class="share-note">Nothing yet. Add projects from below.</p>') +
+      (rest.length ? '<div class="share-sub"><span class="field-label">Not on it</span><span class="share-hint">Click to add at the end</span></div>' +
+        '<ul class="share-picks" aria-label="Projects you can add">' + rest.map(function (p) {
+          return '<li><button type="button" class="chip" data-share-add="' + esc(p.repo) + '">' +
+            '<span class="chip-icon">' + icon(p.icon) + "</span>" + esc(p.name) + none(p) +
+            '<span class="chip-plus">' + SVG.plus + "</span></button></li>";
+        }).join("") + "</ul>" : "") +
       '<div class="share-link">' +
         '<input readonly aria-label="Showcase link" id="shareUrl" value="' + esc(shareLink()) + '">' +
         '<button type="button" class="btn small primary" data-share-act="copy">Copy link</button>' +
         '<a class="btn small" id="shareOpen" href="' + esc(shareLink()) + '" target="_blank" rel="noopener">Open</a>' +
         (share.repos ? '<button type="button" class="btn small ghost" data-share-act="reset">Back to everything with an overview</button>' : "") +
       "</div>";
-    document.getElementById("shareNote").textContent = n + (n === 1 ? " project" : " projects") + " on your showcase";
+    document.getElementById("shareNote").textContent = picked.length + (picked.length === 1 ? " project" : " projects") + " on your showcase";
   }
   function saveShare() { save(KEY.share, share); }
+  function shareChanged(focusSel) {
+    saveShare();
+    renderShare();
+    var el = focusSel && shareBody.querySelector(focusSel);
+    if (el && !el.disabled) el.focus();
+  }
+  function moveShare(repo, to) {
+    ownShare();
+    var from = share.repos.indexOf(repo);
+    if (from < 0) return;
+    share.repos.splice(from, 1);
+    share.repos.splice(Math.max(0, Math.min(share.repos.length, to)), 0, repo);
+  }
   shareBody.addEventListener("click", function (e) {
-    var chip = e.target.closest("[data-share]");
-    if (chip) {
-      if (!share.repos) share.repos = sharedProjects().map(function (p) { return p.repo; });
-      var r = chip.dataset.share, i = share.repos.indexOf(r);
-      if (i >= 0) share.repos.splice(i, 1); else share.repos.push(r);
-      saveShare();
-      renderShare();
-      var again = shareBody.querySelector('[data-share="' + r + '"]');
-      if (again) again.focus();
+    var t;
+    if ((t = e.target.closest("[data-share-view]"))) { share.view = t.dataset.shareView; shareChanged('[data-share-view="' + share.view + '"]'); return; }
+    if ((t = e.target.closest("[data-share-move]"))) {
+      var r = t.dataset.repo, dir = +t.dataset.shareMove;
+      moveShare(r, pickedRepos().indexOf(r) + dir);
+      shareChanged('[data-repo="' + r + '"][data-share-move="' + dir + '"]');
+      return;
+    }
+    if ((t = e.target.closest("[data-share-remove]"))) {
+      ownShare();
+      share.repos = share.repos.filter(function (x) { return x !== t.dataset.shareRemove; });
+      shareChanged("[data-share-remove]");
+      return;
+    }
+    if ((t = e.target.closest("[data-share-add]"))) {
+      ownShare();
+      share.repos.push(t.dataset.shareAdd);
+      shareChanged("[data-share-add]");
       return;
     }
     var act = e.target.closest("[data-share-act]");
     if (!act) return;
-    if (act.dataset.shareAct === "reset") { share.repos = null; saveShare(); renderShare(); return; }
+    if (act.dataset.shareAct === "reset") { share.repos = null; shareChanged(); return; }
     if (act.dataset.shareAct === "copy") {
       var url = shareLink(), done = function () { act.textContent = "Copied"; setTimeout(function () { act.textContent = "Copy link"; }, 1600); };
       var field = document.getElementById("shareUrl");
@@ -1211,6 +1263,46 @@
     document.getElementById("shareUrl").value = shareLink();
     document.getElementById("shareOpen").setAttribute("href", shareLink());
   });
+  // Dragging a row: drop on another to land before it (top half) or after it (bottom half)
+  var shareDrag = null;
+  function dropSpot(e) {
+    var li = e.target.closest("[data-order]");
+    if (!li || li.dataset.order === shareDrag) return null;
+    var b = li.getBoundingClientRect();
+    return { li: li, after: e.clientY > b.top + b.height / 2 };
+  }
+  function clearDropMarks() { shareBody.querySelectorAll(".drop-before, .drop-after, .dragging").forEach(function (el) { el.classList.remove("drop-before", "drop-after", "dragging"); }); }
+  shareBody.addEventListener("dragstart", function (e) {
+    var li = e.target.closest("[data-order]");
+    if (!li) return;
+    shareDrag = li.dataset.order;
+    e.dataTransfer.effectAllowed = "move";
+    try { e.dataTransfer.setData("text/plain", shareDrag); } catch (err) {}
+    li.classList.add("dragging");
+  });
+  shareBody.addEventListener("dragover", function (e) {
+    if (!shareDrag) return;
+    var spot = dropSpot(e);
+    shareBody.querySelectorAll(".drop-before, .drop-after").forEach(function (el) { el.classList.remove("drop-before", "drop-after"); });
+    if (!spot) return;
+    e.preventDefault();
+    spot.li.classList.add(spot.after ? "drop-after" : "drop-before");
+  });
+  shareBody.addEventListener("drop", function (e) {
+    if (!shareDrag) return;
+    var spot = dropSpot(e);
+    if (spot) {
+      e.preventDefault();
+      var list = pickedRepos().filter(function (r) { return r !== shareDrag; });
+      var at = list.indexOf(spot.li.dataset.order) + (spot.after ? 1 : 0);
+      ownShare();
+      share.repos = list.slice(0, at).concat([shareDrag], list.slice(at));
+      shareChanged();
+    }
+    shareDrag = null;
+    clearDropMarks();
+  });
+  shareBody.addEventListener("dragend", function () { shareDrag = null; clearDropMarks(); });
 
   // ---------- sync (sign in to count launches on every device) ----------
   var accountBody = document.getElementById("accountBody");
