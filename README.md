@@ -55,10 +55,14 @@ like any other app, without going through an app store:
 2. Tap **Customize → App → Install app** (or Chrome's **⋮ → Add to home screen → Install**).
 
 It gets its own icon in the app drawer, opens full screen without the browser bar,
-and still opens offline (it shows the last copy it loaded). Tapping a project opens
-it inside the app window with a small bar on top; its **✕** brings you back to the
-launchpad. Updates arrive on their own: the app always loads the newest version when
+and still opens offline (it shows the last copy it loaded). Projects open full
+screen inside the app too, because the app covers all of `jkw2lo.github.io`
+(`"scope": "/"` in the manifest); swipe back (Android's back gesture) to return to
+the launchpad. A project hosted anywhere else would get Chrome's small bar on top. Updates arrive on their own: the app always loads the newest version when
 it's online. On an iPad it's Safari → **Share → Add to Home Screen**.
+
+If the tablet installed it before this change and still shows the bar, remove the
+app and install it again; Chrome otherwise only picks up the change after a day or so.
 
 How it works: `manifest.webmanifest` names the app and its icons (`icons/`, drawn
 from `icons/icon.svg` and `icons/icon-maskable.svg`), and `sw.js` is a service
