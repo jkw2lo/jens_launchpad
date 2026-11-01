@@ -631,6 +631,8 @@ details[open] .chev { transform: rotate(180deg); }
 .share-order button:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
 .share-order button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .share-order [data-share-move] svg { transform: rotate(90deg); }
+.share-order button.share-demo { width: auto; padding: 0 9px; font: 700 0.72rem/1 inherit; color: var(--ctrl-muted); border: 1.5px dashed currentColor; border-radius: 999px; height: 24px; }
+.share-order button.share-demo[aria-pressed="true"] { color: var(--ctrl-ink); background: var(--focus); border: 1.5px solid var(--focus); }
 .chip-none { font-weight: 500; color: var(--ctrl-muted); font-size: 0.75rem; }
 .share-link { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .share-link input { flex: 1 1 260px; font-weight: 500; font-size: 0.82rem; color: var(--ctrl-muted); }

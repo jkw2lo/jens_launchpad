@@ -20,6 +20,8 @@ window.CATEGORIES = [
 //   blurb  one short line under the name (keep it under ~25 characters)
 //   icon   one of the keys in ICONS below
 //   cat    one of the CATEGORIES ids (used when colours are set to "By type")
+//   demo   optional: where its guided demo starts (e.g. "?tour=1"), used by the showcase
+//          when you flag the project as a guided demo under Customize → Share
 window.PROJECTS = [
   { id: "cantonese", repo: "learn_cantonese_quest", name: "Cantonese Quest", blurb: "Speak & read Cantonese", icon: "speech", cat: "languages" },
   { id: "hanzi", repo: "learn_chinese_hanzi_quest", name: "Hanzi Quest", blurb: "Read Chinese characters", icon: "grid", cat: "languages" },

@@ -1148,6 +1148,7 @@
       repos: Array.isArray(v.repos) ? v.repos.filter(function (r) { return typeof r === "string"; }) : null,
       view: SHARE_VIEWS.some(function (x) { return x[0] === v.view; }) ? v.view : "grid",
       welcome: !!v.welcome, // open on the welcome screen, as tracked links do
+      demos: Array.isArray(v.demos) ? v.demos.filter(function (r) { return typeof r === "string"; }) : [], // flagged as guided demos
       title: typeof v.title === "string" ? v.title.slice(0, 80) : "",
       intro: typeof v.intro === "string" ? v.intro.slice(0, 280) : "",
       // tracked links: { id (the k= code), label (yours only), name (the greeting), url, at }
@@ -1178,6 +1179,8 @@
     if (intro) q += "&i=" + encodeURIComponent(intro);
     if (share.view !== "grid") q += "&v=" + share.view;
     if (share.welcome) q += "&w=1";
+    var demos = pickedRepos().filter(function (r) { return share.demos.indexOf(r) >= 0; });
+    if (demos.length) q += "&g=" + demos.map(encodeURIComponent).join(",");
     return new URL("showcase.html", location.href).href.split("?")[0] + "?" + q;
   }
   function renderShare() {
@@ -1200,13 +1203,15 @@
         '<button type="button" data-share-welcome="1" aria-pressed="' + share.welcome + '">A welcome screen</button></div>' +
         '<span class="share-hint">Tracked links always open on it, so with this on they look the same as any other link</span></div>' +
       '<div class="share-sub"><span class="field-label">On the showcase · ' + picked.length + "</span>" +
-        '<span class="share-hint">Drag to reorder, or use the arrows</span></div>' +
+        '<span class="share-hint">Drag to reorder, or use the arrows. Turn on Demo for projects with a guided demo.</span></div>' +
       (picked.length ? '<ol class="share-order" aria-label="Showcase order">' + picked.map(function (p, i) {
         return '<li draggable="true" data-order="' + esc(p.repo) + '">' +
           '<span class="share-grip" aria-hidden="true">' + SVG.grip + "</span>" +
           '<span class="share-num">' + (i + 1) + "</span>" +
           '<span class="chip-icon">' + icon(p.icon) + "</span>" +
           '<span class="share-name">' + esc(p.name) + none(p) + "</span>" +
+          '<button type="button" class="share-demo" data-share-demo="' + esc(p.repo) + '" aria-pressed="' + (share.demos.indexOf(p.repo) >= 0) +
+            '" aria-label="' + esc(p.name) + ' has a guided demo">Demo</button>' +
           '<button type="button" data-share-move="-1" data-repo="' + esc(p.repo) + '" aria-label="Move ' + esc(p.name) + ' up"' + (i ? "" : " disabled") + ">" + SVG.prev + "</button>" +
           '<button type="button" data-share-move="1" data-repo="' + esc(p.repo) + '" aria-label="Move ' + esc(p.name) + ' down"' + (i < picked.length - 1 ? "" : " disabled") + ">" + SVG.next + "</button>" +
           '<button type="button" data-share-remove="' + esc(p.repo) + '" aria-label="Take ' + esc(p.name) + ' off the showcase">' + SVG.close + "</button>" +
@@ -1325,7 +1330,8 @@
     var q = new URL(url, location.href).searchParams;
     return {
       p: (q.get("p") || "").split(",").filter(Boolean), t: q.get("t") || "", i: q.get("i") || "",
-      v: q.get("v") || "grid", w: q.get("w") === "1", n: q.get("n") || ""
+      v: q.get("v") || "grid", w: q.get("w") === "1", n: q.get("n") || "",
+      g: (q.get("g") || "").split(",").filter(Boolean)
     };
   }
   function shorten(link) {
@@ -1368,6 +1374,12 @@
       var r = t.dataset.repo, dir = +t.dataset.shareMove;
       moveShare(r, pickedRepos().indexOf(r) + dir);
       shareChanged('[data-repo="' + r + '"][data-share-move="' + dir + '"]');
+      return;
+    }
+    if ((t = e.target.closest("[data-share-demo]"))) {
+      var d = t.dataset.shareDemo;
+      share.demos = share.demos.indexOf(d) >= 0 ? share.demos.filter(function (x) { return x !== d; }) : share.demos.concat(d);
+      shareChanged('[data-share-demo="' + d + '"]');
       return;
     }
     if ((t = e.target.closest("[data-share-remove]"))) {

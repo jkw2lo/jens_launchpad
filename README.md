@@ -104,7 +104,11 @@ Pick what goes on it under **Customize → Share**: add projects from the chips,
 intro, then **Copy link**. Layouts: *Grid* (cards in rows), *Featured* (the first project gets a
 big card across the top) and *List* (one project per row). The link carries all of it
 (`showcase.html?p=recipe_book,writers-blocks&t=…&i=…&v=feature`), so you can make a different
-link for each audience, and a link you've sent keeps showing what it showed. The picks are
+link for each audience, and a link you've sent keeps showing what it showed. Turn on **Demo** beside a
+project that has a guided demo: its card gets a *Guided demo* badge, its button reads *Try the
+guided demo*, and the count line says how many walk the visitor through (`&g=repo,…` in the
+link). If the demo starts somewhere other than the project's front page, give it
+`demo: "?tour=1"` (any path or URL) in `js/projects.js`. The picks are
 saved, and synced when you're signed in. Until you change anything, it's every project with an
 overview, in launchpad order.
 
