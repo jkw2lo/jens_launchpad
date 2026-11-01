@@ -12,6 +12,26 @@ window.CATEGORIES = [
   { id: "more", label: "More" }
 ];
 
+// Who made these, shown at the foot of showcase.html for anyone you send it to.
+window.CONTACT = {
+  name: "Jennifer Lo",
+  links: [
+    ["LinkedIn", "https://www.linkedin.com/in/jenniferkwlo"],
+    ["Email", "mailto:jennifer.kw.lo@gmail.com"],
+    ["GitHub", "https://github.com/jkw2lo"]
+  ]
+};
+
+// What plain showcase.html shows (a link made under Customize → Share overrides it).
+//   demos  the projects that have a guided demo
+window.SHOWCASE = {
+  title: "Jennifer Lo · Projects",
+  intro: "Apps I designed and built with AI-assisted development, each one solving a problem I actually had.",
+  view: "feature",
+  projects: ["awl-gusset", "trip_planner", "writers-blocks", "groundwork_habits_tasks", "learn_cantonese_quest", "recipe_book"],
+  demos: []
+};
+
 // The known projects. Listing a project here lets you give it a nicer name,
 // blurb, icon and type than the automatic GitHub lookup can.
 //   id     short unique key (remembers order, box and open counts; don't change it later)

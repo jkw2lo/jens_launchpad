@@ -138,6 +138,10 @@
     .go:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
     .go svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
+    .contact { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.92rem; }
+    .contact strong { color: var(--ink); font-weight: 800; }
+    .contact a { font-weight: 700; text-decoration: none; border-bottom: 1.5px solid var(--line); }
+    @media (hover: hover) { .contact a:hover { color: var(--ink); border-color: currentColor; } }
     .empty { padding: 48px 24px; text-align: center; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 22px; }
     @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
   </style>
@@ -159,15 +163,27 @@
       <p class="count" id="count"></p>
     </header>
     <ul class="grid" id="grid" aria-live="polite"></ul>
+    <footer class="contact" id="contact" hidden></footer>
   </div>
 
-  <script src="js/projects.js?v=202611010123"></script>
+  <script src="js/projects.js?v=202611010203"></script>
   <script>
   (function () {
     "use strict";
     var OWNER = window.GITHUB_USER || "";
     var DOCS = "https://firestore.googleapis.com/v1/projects/github-projects-5d4e4/databases/(default)/documents/";
     var API_KEY = "AIzaSyBeIyBs3FtSx9T_wlJHsCqkfxZkhbX3Qhk";
+
+    // Who made it and how to reach them: window.CONTACT in projects.js
+    var who = window.CONTACT || {};
+    if (who.name || (who.links && who.links.length)) {
+      var foot = document.getElementById("contact"), e = function (t) { var d = document.createElement("span"); d.textContent = t; return d.innerHTML; };
+      foot.innerHTML = (who.name ? "<span>Built by <strong>" + e(who.name) + "</strong></span>" : "") +
+        (who.links || []).filter(function (l) { return /^(https?:|mailto:)/.test(l[1] || ""); }).map(function (l) {
+          return '<a href="' + e(l[1]).replace(/"/g, "&quot;") + '"' + (/^http/.test(l[1]) ? ' target="_blank" rel="noopener"' : "") + ">" + e(l[0]) + "</a>";
+        }).join("");
+      foot.hidden = false;
+    }
 
     // A short link (showcase.html?h0udkw) is just a code; its settings are saved in
     // showcase_links/{code}, which anyone with the code can read (and nobody can list).
@@ -231,6 +247,7 @@
     var intro = str(params.get("i"), 280) || str(preset.intro, 280);
     // ?g= flags the projects that have a guided demo; projects.js can give a demo its own url
     var demos = (params.get("g") || "").split(",").map(function (s) { return s.trim(); }).filter(validRepo);
+    if (!params.get("p") && Array.isArray(preset.demos)) demos = preset.demos.filter(validRepo);
     document.getElementById("title").textContent = title;
     document.title = title;
     if (intro) { var el = document.getElementById("intro"); el.textContent = intro; el.hidden = false; }

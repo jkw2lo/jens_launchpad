@@ -113,7 +113,11 @@ saved, and synced when you're signed in. Until you change anything, it's every p
 overview, in launchpad order.
 
 Plain `showcase.html` shows every project with an overview. To fix a default list instead, set
-`window.SHOWCASE = { title, intro, projects: ["repo", …] }` in `js/projects.js`.
+`window.SHOWCASE = { title, intro, view, projects: ["repo", …], demos: ["repo", …] }` in `js/projects.js`
+(it is set now: a curated six, Featured).
+
+`window.CONTACT` in the same file puts your name and links (LinkedIn, email, GitHub) at the foot
+of every showcase.
 
 An About page opened from a showcase leads back to that showcase, not to the launchpad.
 
