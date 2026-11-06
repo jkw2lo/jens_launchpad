@@ -3,8 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Projects · Jen</title>
-  <meta name="description" content="A selection of Jen's projects.">
+  <title>Jennifer Lo · Projects</title>
+  <meta name="description" content="Apps I designed and built with AI-assisted development, each one solving a problem I actually had.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Jennifer Lo · Projects">
+  <meta property="og:description" content="Apps I designed and built with AI-assisted development, each one solving a problem I actually had.">
+  <meta property="og:url" content="https://jkw2lo.github.io/jens_launchpad/showcase.html">
+  <meta property="og:image" content="https://jkw2lo.github.io/jens_launchpad/icons/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Jennifer Lo's projects: screenshots of a bag pattern tool, a trip planner and a habit tracker">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='12' height='12' rx='3' fill='%234f6bff'/%3E%3Crect x='18' y='2' width='12' height='12' rx='6' fill='%23ff5fa2'/%3E%3Crect x='2' y='18' width='12' height='12' rx='6' fill='%23ffb703'/%3E%3Crect x='18' y='18' width='12' height='12' rx='3' fill='%231d1b33'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -166,7 +175,7 @@
     <footer class="contact" id="contact" hidden></footer>
   </div>
 
-  <script src="js/projects.js?v=202611010203"></script>
+  <script src="js/projects.js?v=202611061534"></script>
   <script>
   (function () {
     "use strict";
@@ -175,15 +184,7 @@
     var API_KEY = "AIzaSyBeIyBs3FtSx9T_wlJHsCqkfxZkhbX3Qhk";
 
     // Who made it and how to reach them: window.CONTACT in projects.js
-    var who = window.CONTACT || {};
-    if (who.name || (who.links && who.links.length)) {
-      var foot = document.getElementById("contact"), e = function (t) { var d = document.createElement("span"); d.textContent = t; return d.innerHTML; };
-      foot.innerHTML = (who.name ? "<span>Built by <strong>" + e(who.name) + "</strong></span>" : "") +
-        (who.links || []).filter(function (l) { return /^(https?:|mailto:)/.test(l[1] || ""); }).map(function (l) {
-          return '<a href="' + e(l[1]).replace(/"/g, "&quot;") + '"' + (/^http/.test(l[1]) ? ' target="_blank" rel="noopener"' : "") + ">" + e(l[0]) + "</a>";
-        }).join("");
-      foot.hidden = false;
-    }
+    window.showContact(document.getElementById("contact"));
 
     // A short link (showcase.html?h0udkw) is just a code; its settings are saved in
     // showcase_links/{code}, which anyone with the code can read (and nobody can list).
@@ -241,13 +242,15 @@
     var everything = !named.length;
     var repos = everything ? (window.PROJECTS || []).map(function (p) { return p.repo; }) : named;
 
+    // A link with its own ?p= says everything itself; window.SHOWCASE is only for the plain page
+    if (params.get("p")) preset = {};
     var title = str(params.get("t"), 80) || str(preset.title, 80) || "Projects";
     var view = params.get("v") || preset.view || "grid";
     if (view === "feature" || view === "list") document.getElementById("grid").classList.add(view);
     var intro = str(params.get("i"), 280) || str(preset.intro, 280);
     // ?g= flags the projects that have a guided demo; projects.js can give a demo its own url
     var demos = (params.get("g") || "").split(",").map(function (s) { return s.trim(); }).filter(validRepo);
-    if (!params.get("p") && Array.isArray(preset.demos)) demos = preset.demos.filter(validRepo);
+    if (Array.isArray(preset.demos)) demos = preset.demos.filter(validRepo);
     document.getElementById("title").textContent = title;
     document.title = title;
     if (intro) { var el = document.getElementById("intro"); el.textContent = intro; el.hidden = false; }

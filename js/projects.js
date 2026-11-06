@@ -22,7 +22,19 @@ window.CONTACT = {
   ]
 };
 
-// What plain showcase.html shows (a link made under Customize → Share overrides it).
+// Fills a page's contact footer from window.CONTACT.
+window.showContact = function (foot) {
+  var who = window.CONTACT || {};
+  var e = function (t) { var d = document.createElement("span"); d.textContent = t; return d.innerHTML.replace(/"/g, "&quot;"); };
+  if (!foot || !(who.name || (who.links && who.links.length))) return;
+  foot.innerHTML = (who.name ? "<span>Built by <strong>" + e(who.name) + "</strong></span>" : "") +
+    (who.links || []).filter(function (l) { return /^(https?:|mailto:)/.test(l[1] || ""); }).map(function (l) {
+      return '<a href="' + e(l[1]) + '"' + (/^http/.test(l[1]) ? ' target="_blank" rel="noopener"' : "") + ">" + e(l[0]) + "</a>";
+    }).join("");
+  foot.hidden = false;
+};
+
+// What plain showcase.html shows, and where Customize → Share starts until you change it.
 //   demos  the projects that have a guided demo
 window.SHOWCASE = {
   title: "Jennifer Lo · Projects",

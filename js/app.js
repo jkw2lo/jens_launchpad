@@ -1144,13 +1144,21 @@
   var share = normalizeShare(load(KEY.share, null));
   function normalizeShare(v) {
     v = v && typeof v === "object" ? v : {};
+    // Never touched: start from window.SHOWCASE. "seeded" keeps a title you later clear from coming back.
+    var fresh = !v.seeded && !v.repos && !v.title && !v.intro && !v.welcome && !(v.links && v.links.length) &&
+      !(v.demos && v.demos.length) && (!v.view || v.view === "grid");
+    var preset = fresh ? window.SHOWCASE || {} : {};
+    var view = fresh ? preset.view : v.view;
+    var demos = fresh ? preset.demos : v.demos;
+    var title = fresh ? preset.title : v.title, intro = fresh ? preset.intro : v.intro;
     return {
+      seeded: true,
       repos: Array.isArray(v.repos) ? v.repos.filter(function (r) { return typeof r === "string"; }) : null,
-      view: SHARE_VIEWS.some(function (x) { return x[0] === v.view; }) ? v.view : "grid",
+      view: SHARE_VIEWS.some(function (x) { return x[0] === view; }) ? view : "grid",
       welcome: !!v.welcome, // open on the welcome screen, as tracked links do
-      demos: Array.isArray(v.demos) ? v.demos.filter(function (r) { return typeof r === "string"; }) : [], // flagged as guided demos
-      title: typeof v.title === "string" ? v.title.slice(0, 80) : "",
-      intro: typeof v.intro === "string" ? v.intro.slice(0, 280) : "",
+      demos: Array.isArray(demos) ? demos.filter(function (r) { return typeof r === "string"; }) : [], // flagged as guided demos
+      title: typeof title === "string" ? title.slice(0, 80) : "",
+      intro: typeof intro === "string" ? intro.slice(0, 280) : "",
       // tracked links: { id (the k= code), label (yours only), name (the greeting), url, at }
       links: Array.isArray(v.links) ? v.links.filter(function (l) {
         return l && typeof l.id === "string" && typeof l.url === "string";
@@ -1162,10 +1170,12 @@
   }
   function shareable() { return fullOrder().map(function (id) { return byId[id]; }).filter(function (p) { return p && p.repo; }); }
   function knownRepos() { var k = {}; shareable().forEach(function (p) { k[p.repo] = p; }); return k; }
-  // The showcase's order: yours once you've changed anything, else launchpad order
+  // The showcase's order: yours once you've changed anything, else window.SHOWCASE's,
+  // else every project with an overview in launchpad order
   function pickedRepos() {
     var k = knownRepos();
-    var list = share.repos || shareable().filter(function (p) { return overviews.has[p.repo]; }).map(function (p) { return p.repo; });
+    var preset = window.SHOWCASE && window.SHOWCASE.projects;
+    var list = share.repos || preset || shareable().filter(function (p) { return overviews.has[p.repo]; }).map(function (p) { return p.repo; });
     return list.filter(function (r) { return k[r]; });
   }
   function sharedProjects() { var k = knownRepos(); return pickedRepos().map(function (r) { return k[r]; }); }
@@ -1227,7 +1237,7 @@
         '<input readonly aria-label="Showcase link" id="shareUrl" value="' + esc(shareLink()) + '">' +
         '<button type="button" class="btn small primary" data-share-act="copy">Copy link</button>' +
         '<a class="btn small" id="shareOpen" href="' + esc(shareLink()) + '" target="_blank" rel="noopener">Open</a>' +
-        (share.repos ? '<button type="button" class="btn small ghost" data-share-act="reset">Back to everything with an overview</button>' : "") +
+        (share.repos ? '<button type="button" class="btn small ghost" data-share-act="reset">Back to the default list</button>' : "") +
       "</div>" +
       '<div class="share-sub"><span class="field-label">Tracked links</span>' +
         '<span class="share-hint">Each opens on the welcome screen, and its button records a visit. Signed in, links come out short.</span></div>' +

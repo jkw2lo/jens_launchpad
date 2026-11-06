@@ -109,15 +109,19 @@ project that has a guided demo: its card gets a *Guided demo* badge, its button 
 guided demo*, and the count line says how many walk the visitor through (`&g=repo,…` in the
 link). If the demo starts somewhere other than the project's front page, give it
 `demo: "?tour=1"` (any path or URL) in `js/projects.js`. The picks are
-saved, and synced when you're signed in. Until you change anything, it's every project with an
-overview, in launchpad order.
+saved, and synced when you're signed in. Until you change anything, the panel starts from
+`window.SHOWCASE` in `js/projects.js` (or, without one, every project with an overview, in
+launchpad order).
 
 Plain `showcase.html` shows every project with an overview. To fix a default list instead, set
 `window.SHOWCASE = { title, intro, view, projects: ["repo", …], demos: ["repo", …] }` in `js/projects.js`
 (it is set now: a curated six, Featured).
 
 `window.CONTACT` in the same file puts your name and links (LinkedIn, email, GitHub) at the foot
-of every showcase.
+of every showcase and About page.
+
+A link's preview image when pasted into email or LinkedIn is `icons/og-image.jpg` (1200×630); the
+tags are in the `<head>` of `showcase.html` and `overview.html`.
 
 An About page opened from a showcase leads back to that showcase, not to the launchpad.
 
