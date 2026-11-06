@@ -38,7 +38,7 @@ window.showContact = function (foot) {
 //   demos  the projects that have a guided demo
 window.SHOWCASE = {
   title: "Jennifer Lo · Projects",
-  intro: "Apps I designed and built with AI-assisted development, each one solving a problem I actually had.",
+  intro: "Applied AI and analytics leader with 7+ years across enterprise AI adoption, automation and audit analytics. These are apps I designed and built with Claude, each one solving a problem I actually had.",
   view: "feature",
   projects: ["awl-gusset", "trip_planner", "writers-blocks", "groundwork_habits_tasks", "learn_cantonese_quest", "recipe_book"],
   demos: []
