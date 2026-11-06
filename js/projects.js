@@ -13,6 +13,8 @@ window.CATEGORIES = [
 ];
 
 // Who made these, shown at the foot of showcase.html for anyone you send it to.
+// To add a resume, put a copy without your phone number in the repo and add a line like
+// ["Resume", "https://jkw2lo.github.io/jens_launchpad/resume.pdf"].
 window.CONTACT = {
   name: "Jennifer Lo",
   links: [
@@ -35,12 +37,15 @@ window.showContact = function (foot) {
 };
 
 // What plain showcase.html shows, and where Customize → Share starts until you change it.
-//   demos  the projects that have a guided demo
+//   view        "side" is the fixed list beside one scrolling container
+//   highlights  with "side": how many of the projects, from the top, get their full detail
+//   demos       the projects that have a guided demo
 window.SHOWCASE = {
-  title: "Jennifer Lo · Projects",
-  intro: "Applied AI and analytics leader with 7+ years across enterprise AI adoption, automation and audit analytics. These are apps I designed and built with Claude, each one solving a problem I actually had.",
-  view: "feature",
-  projects: ["awl-gusset", "trip_planner", "writers-blocks", "groundwork_habits_tasks", "learn_cantonese_quest", "recipe_book"],
+  title: "Jennifer Lo",
+  intro: "A few apps I designed and built with Claude, each for something I needed myself.",
+  view: "side",
+  highlights: 3,
+  projects: ["awl-gusset", "trip_planner", "writers-blocks", "groundwork_habits_tasks", "learn_cantonese_quest", "recipe_book", "yearly_calendar", "planner", "notebook_portfolio"],
   demos: []
 };
 

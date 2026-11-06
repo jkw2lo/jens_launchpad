@@ -101,7 +101,9 @@ screenshot, tagline and pitch, and Open and About buttons. No launch counts, no 
 
 Pick what goes on it under **Customize → Share**: add projects from the chips, drag the list
 (or use its arrows) into the order you want, choose a layout, give it a title and an optional
-intro, then **Copy link**. Layouts: *Grid* (cards in rows), *Featured* (the first project gets a
+intro, then **Copy link**. Layouts: *Side list* (a list that stays put beside one scrolling
+container: the first few projects, your choice of how many, get their full detail, the rest a short
+entry under *Also built*; on a phone it becomes one long page; `&v=side&h=3`), *Grid* (cards in rows), *Featured* (the first project gets a
 big card across the top) and *List* (one project per row). The link carries all of it
 (`showcase.html?p=recipe_book,writers-blocks&t=…&i=…&v=feature`), so you can make a different
 link for each audience, and a link you've sent keeps showing what it showed. Turn on **Demo** beside a
@@ -115,7 +117,7 @@ launchpad order).
 
 Plain `showcase.html` shows every project with an overview. To fix a default list instead, set
 `window.SHOWCASE = { title, intro, view, projects: ["repo", …], demos: ["repo", …] }` in `js/projects.js`
-(it is set now: a curated six, Featured).
+(it is set now: three highlights and six more, Side list).
 
 `window.CONTACT` in the same file puts your name and links (LinkedIn, email, GitHub) at the foot
 of every showcase and About page.

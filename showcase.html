@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Jennifer Lo · Projects</title>
-  <meta name="description" content="Apps I designed and built with AI-assisted development, each one solving a problem I actually had.">
+  <meta name="description" content="A few apps I designed and built with Claude, each for something I needed myself.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Jennifer Lo · Projects">
-  <meta property="og:description" content="Apps I designed and built with AI-assisted development, each one solving a problem I actually had.">
+  <meta property="og:description" content="A few apps I designed and built with Claude, each for something I needed myself.">
   <meta property="og:url" content="https://jkw2lo.github.io/jens_launchpad/showcase.html">
   <meta property="og:image" content="https://jkw2lo.github.io/jens_launchpad/icons/og-image.jpg">
   <meta property="og:image:width" content="1200">
@@ -23,6 +23,7 @@
       showcase.html                     every project that has an overview
       showcase.html?p=a,b,c             just those repos, in that order
       &t=Title  &i=A line of intro      optional heading and intro
+      &v=side  &h=3                     a fixed list beside one scrolling container; the first 3 get full detail
       &v=grid | feature | list          the layout: cards, the first one large, or rows
       &w=1                              open on a welcome screen
       &k=code  &n=Name                  a tracked link: the welcome screen's button also records
@@ -151,6 +152,79 @@
     .contact strong { color: var(--ink); font-weight: 800; }
     .contact a { font-weight: 700; text-decoration: none; border-bottom: 1.5px solid var(--line); }
     @media (hover: hover) { .contact a:hover { color: var(--ink); border-color: currentColor; } }
+    /* ---------- the side-list layout: a fixed list beside one scrolling container ---------- */
+    .page.side-page { max-width: 1280px; }
+    .page.side-page header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px 32px; margin-bottom: 22px; }
+    .contact.top { margin: 8px 0 0; padding: 0; border: 0; }
+    .contact.top span { display: none; }
+    .side-wrap { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .side-nav { display: none; }
+    .side-label { margin: 0 0 6px; color: var(--muted); font-size: 0.8rem; font-weight: 700; }
+    .side-nav ul { margin: 0 0 22px; padding: 0; list-style: none; border-left: 2px solid var(--line); }
+    .side-nav a { display: flex; align-items: center; gap: 7px; margin-left: -2px; padding: 7px 0 7px 14px; border-left: 2px solid transparent; color: var(--muted); font-weight: 600; text-decoration: none; }
+    .side-nav .also a { padding-block: 4px; font-size: 0.88rem; font-weight: 500; }
+    @media (hover: hover) { .side-nav a:hover { color: var(--ink); } }
+    .side-nav a[aria-current="true"] { color: color-mix(in srgb, var(--accent) 80%, var(--ink)); border-left-color: var(--accent); font-weight: 800; }
+    .side-nav a:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; border-radius: 6px; }
+    .side-nav svg { flex: none; width: 11px; height: 11px; fill: currentColor; }
+    .side-box { position: relative; min-width: 0; }
+    .side-scroll { background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); padding: 22px; }
+    .side-scroll:focus-visible { outline: 3px solid var(--line); outline-offset: 2px; }
+    .side-cue { display: none; }
+    .proj + .proj, .also-head { margin-top: 36px; padding-top: 36px; border-top: 1px solid var(--line); }
+    .proj-shot { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
+    .proj-shot img { width: 100%; height: auto; }
+    .proj-shot.phone { max-width: 280px; margin-inline: auto; }
+    .proj-top { display: grid; gap: 18px 30px; align-items: center; }
+    .proj h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0; font-size: 1.75rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.2; }
+    .proj-pitch { margin: 6px 0 0; font-size: 1.05rem; }
+    .proj-why { margin: 6px 0 0; color: var(--muted); font-size: 0.95rem; }
+    .proj-why b { color: var(--ink); font-weight: 700; }
+    .proj .actions { margin-top: 0; padding-top: 14px; }
+    .proj .flag { position: static; box-shadow: none; }
+    .feat { display: grid; gap: 18px 32px; margin-top: 30px; align-items: center; }
+    .feat h3 { margin: 0; font-size: 1.1rem; font-weight: 800; letter-spacing: -0.015em; }
+    .feat p { margin: 4px 0 0; color: var(--muted); font-size: 0.95rem; }
+    .feat ul { margin: 8px 0 0; padding-left: 18px; font-size: 0.9rem; }
+    .feat li + li { margin-top: 3px; }
+    .feat-plain { display: grid; gap: 20px 32px; margin-top: 30px; }
+    .feat-plain .feat { display: block; margin: 0; }
+    .proj-more { display: grid; gap: 18px; margin-top: 30px; }
+    .proj-facts { margin: 24px 0 0; color: var(--muted); font-size: 0.85rem; }
+    .also-head { margin-bottom: 0; color: var(--muted); font-size: 1rem; font-weight: 800; }
+    .proj.small { display: grid; gap: 14px 24px; margin-top: 22px; padding-top: 0; border-top: 0; }
+    .proj.small h2 { font-size: 1.25rem; }
+    .proj.small .proj-pitch { font-size: 0.95rem; }
+    .proj.small .proj-why { font-size: 0.88rem; }
+    @media (min-width: 700px) {
+      .proj-top { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+      .feat.pic { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+      .feat-plain { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .proj-more.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .proj.small { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: center; }
+    }
+    /* Wide enough: the page stops scrolling, and only the container does */
+    @media (min-width: 900px) and (min-height: 560px) {
+      html:has(.side-page), html:has(.side-page) body { height: 100%; overflow: hidden; }
+      .page.side-page { display: flex; flex-direction: column; height: 100dvh; padding: 30px 24px 24px; }
+      .page.side-page header { flex: none; flex-wrap: nowrap; }
+      .side-page h1 { font-size: 2.3rem; }
+      .side-page .intro { max-width: none; margin-top: 6px; font-size: 1rem; }
+      .side-wrap { flex: 1; min-height: 0; grid-template-columns: 210px minmax(0, 1fr); gap: 32px; }
+      .side-nav { display: block; overflow-y: auto; padding-top: 4px; }
+      .side-box { min-height: 0; }
+      .side-scroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 26px 30px 56px; scrollbar-width: thin; }
+      .side-cue {
+        position: absolute; left: 1px; right: 1px; bottom: 1px; display: flex; justify-content: center; align-items: flex-end;
+        height: 76px; padding-bottom: 12px; border-radius: 0 0 22px 22px; pointer-events: none;
+        background: linear-gradient(to bottom, transparent, var(--card) 72%); transition: opacity 0.2s ease;
+      }
+      .side-cue span { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--muted); font-size: 0.8rem; font-weight: 700; transition: opacity 0.2s ease; }
+      .side-cue svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+      .side-box.scrolled .side-cue span { opacity: 0; }
+      .side-box.at-end .side-cue { opacity: 0; }
+    }
+    @media (min-width: 900px) and (min-height: 560px) and (prefers-reduced-motion: no-preference) { .side-scroll { scroll-behavior: smooth; } }
     .empty { padding: 48px 24px; text-align: center; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 22px; }
     @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
   </style>
@@ -167,15 +241,18 @@
   </section>
   <div class="page" id="page">
     <header>
-      <h1 id="title">Projects</h1>
-      <p class="intro" id="intro" hidden></p>
-      <p class="count" id="count"></p>
+      <div>
+        <h1 id="title">Projects</h1>
+        <p class="intro" id="intro" hidden></p>
+        <p class="count" id="count"></p>
+      </div>
     </header>
     <ul class="grid" id="grid" aria-live="polite"></ul>
+    <div class="side-wrap" id="side" hidden></div>
     <footer class="contact" id="contact" hidden></footer>
   </div>
 
-  <script src="js/projects.js?v=202611061559"></script>
+  <script src="js/projects.js?v=202611061736"></script>
   <script>
   (function () {
     "use strict";
@@ -197,7 +274,7 @@
         var sv = function (x) { return (x && x.stringValue) || ""; };
         var p = ((f.p && f.p.arrayValue && f.p.arrayValue.values) || []).map(sv).filter(Boolean);
         if (p.length) q.set("p", p.join(","));
-        ["t", "i", "v", "n"].forEach(function (k) { if (sv(f[k])) q.set(k, sv(f[k])); });
+        ["t", "i", "v", "n", "h"].forEach(function (k) { if (sv(f[k])) q.set(k, sv(f[k])); });
         if (f.w && f.w.booleanValue) q.set("w", "1");
         var g = ((f.g && f.g.arrayValue && f.g.arrayValue.values) || []).map(sv).filter(Boolean);
         if (g.length) q.set("g", g.join(","));
@@ -294,7 +371,7 @@
     var here = location.pathname.split("/").pop() + location.search;
     function card(x) {
       var p = byRepo[x.repo] || {}, d = x.d || {};
-      var name = str(d.name, 60) || p.name || pretty(x.repo);
+      var name = projectName(x);
       var tagline = str(d.tagline, 60) || p.blurb || str(x.desc, 120);
       var accent = /^#[0-9a-f]{6}$/i.test(d.accent || "") ? d.accent : "#4f6bdc";
       var open = p.url || "https://" + OWNER + ".github.io/" + x.repo + "/";
@@ -323,6 +400,106 @@
           "</div>" +
         "</div>" +
       "</li>";
+    }
+
+    function projectName(x) { return str((x.d || {}).name, 60) || (byRepo[x.repo] || {}).name || pretty(x.repo); }
+
+    // The side-list layout (&v=side): the first &h= projects are highlights with their full
+    // detail; the rest get a short entry under "Also built". It replaces the About page's role.
+    var highlights = Math.max(1, Math.min(+params.get("h") || +preset.highlights || 3, 30));
+    function picture(s, repo) {
+      var url = s && safeUrl(str(s.src, 300), new URL("../" + repo + "/overview/", location.href).href);
+      return url ? '<div class="proj-shot' + (s.frame === "phone" ? " phone" : "") + '"><img src="' + esc(url) + '" alt="' + esc(str(s.alt, 200)) + '" loading="lazy"></div>' : "";
+    }
+    function feature(f, repo) {
+      var shot = f.screen ? picture(f.screen, repo) : "";
+      var items = (Array.isArray(f.details) ? f.details : []).slice(0, 3).map(function (t) { return str(t, 90); }).filter(Boolean);
+      return '<div class="feat' + (shot ? " pic" : "") + '"><div><h3>' + esc(str(f.title, 30)) + "</h3>" +
+        (str(f.text) ? "<p>" + esc(str(f.text, 100)) + "</p>" : "") +
+        (items.length ? "<ul>" + items.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>" : "") +
+        "</div>" + shot + "</div>";
+    }
+    function sideEntry(x, i) {
+      var p = byRepo[x.repo] || {}, d = x.d || {}, name = projectName(x), main = i < highlights;
+      var accent = /^#[0-9a-f]{6}$/i.test(d.accent || "") ? d.accent : "#4f6bdc";
+      var screens = Array.isArray(d.screens) ? d.screens : [];
+      var demo = demos.indexOf(x.repo) >= 0;
+      var open = p.url || "https://" + OWNER + ".github.io/" + x.repo + "/";
+      if (demo && p.demo) open = safeUrl(p.demo, open) || open;
+      var problem = str(d.problem, 100) || (d.problem && str(d.problem.headline, 100)) || "";
+      var left = str(d.pitch) ? '<p class="proj-pitch">' + esc(str(d.pitch, 200)) + "</p>" : (p.blurb || x.desc ? '<p class="proj-pitch">' + esc(p.blurb || str(x.desc, 120)) + "</p>" : "");
+      var why = problem ? '<p class="proj-why"><b>Why I built it:</b> ' + esc(problem) + "</p>" : "";
+      var buttons = '<div class="actions"><a class="btn primary" href="' + esc(open) + '">Open ' + ARROW + "</a>" +
+        (OWNER ? '<a class="btn ghost" href="https://github.com/' + esc(OWNER) + "/" + esc(x.repo) + '">Source</a>' : "") + "</div>";
+      var title = "<h2>" + esc(name) + (demo ? ' <span class="flag">' + PLAY + "Guided demo</span>" : "") + "</h2>";
+      var html = '<section class="proj' + (main ? "" : " small") + '" id="p-' + esc(x.repo) + '" data-repo="' + esc(x.repo) + '" style="--accent:' + accent + ";--on-accent:" + inkOn(accent) + '">';
+      if (!main) return html + picture(screens[0], x.repo) + '<div class="proj-head">' + title + left + why + buttons + "</div></section>";
+      var features = (Array.isArray(d.features) ? d.features : []).slice(0, 4).filter(function (f) { return f && str(f.title); });
+      var withPic = features.filter(function (f) { return f.screen; }), plain = features.filter(function (f) { return !f.screen; });
+      var f = d.facts || {};
+      var facts = [f.worksOn, f.data, f.builtWith, str(f.started) ? "Since " + str(f.started) : ""].map(function (t) { return str(t, 40); }).filter(Boolean);
+      var extra = screens.slice(1, 3).map(function (s) { return picture(s, x.repo); }).filter(Boolean);
+      return html + '<div class="proj-top">' + picture(screens[0], x.repo) + '<div class="proj-head">' + title + left + why + buttons + "</div></div>" +
+        withPic.map(function (t) { return feature(t, x.repo); }).join("") +
+        (plain.length ? '<div class="feat-plain">' + plain.map(function (t) { return feature(t, x.repo); }).join("") + "</div>" : "") +
+        (extra.length ? '<div class="proj-more' + (extra.length > 1 ? " two" : "") + '">' + extra.join("") + "</div>" : "") +
+        (facts.length ? '<p class="proj-facts">' + esc(facts.join(" · ")) + "</p>" : "") + "</section>";
+    }
+    function renderSide(shown) {
+      var side = document.getElementById("side"), page = document.getElementById("page");
+      var navItem = function (x) {
+        var a = /^#[0-9a-f]{6}$/i.test((x.d || {}).accent || "") ? x.d.accent : "#4f6bdc";
+        return '<li><a href="#p-' + esc(x.repo) + '" data-repo="' + esc(x.repo) + '" style="--accent:' + a + '">' + esc(projectName(x)) +
+          (demos.indexOf(x.repo) >= 0 ? PLAY : "") + "</a></li>";
+      };
+      var top = shown.slice(0, highlights), also = shown.slice(highlights);
+      side.innerHTML = '<nav class="side-nav" aria-label="Projects">' +
+        (also.length ? '<p class="side-label">Highlights</p>' : "") + "<ul>" + top.map(navItem).join("") + "</ul>" +
+        (also.length ? '<p class="side-label">Also built</p><ul class="also">' + also.map(navItem).join("") + "</ul>" : "") + "</nav>" +
+        '<div class="side-box"><div class="side-scroll" tabindex="0" role="region" aria-label="Project details">' +
+          top.map(sideEntry).join("") +
+          (also.length ? '<h2 class="also-head">Also built</h2>' + also.map(function (x, i) { return sideEntry(x, i + highlights); }).join("") : "") +
+        "</div><div class=\"side-cue\" aria-hidden=\"true\"><span>Scroll for more " + svg('<path d="M12 5v14M6 13l6 6 6-6"/>') + "</span></div></div>";
+      page.classList.add("side-page");
+      document.getElementById("grid").hidden = true;
+      side.hidden = false;
+      var contact = document.getElementById("contact");
+      contact.classList.add("top");
+      page.querySelector("header").appendChild(contact);
+
+      // The list follows the scrolling; a clicked name stays lit until the visitor scrolls again
+      var box = side.querySelector(".side-box"), scroller = side.querySelector(".side-scroll");
+      var entries = [].slice.call(scroller.querySelectorAll(".proj")), links = [].slice.call(side.querySelectorAll(".side-nav a"));
+      var clicked = "";
+      function mark() {
+        var line = scroller.getBoundingClientRect().top + scroller.clientHeight * 0.3, cur = entries[0] && entries[0].dataset.repo;
+        entries.forEach(function (s) { if (s.getBoundingClientRect().top < line) cur = s.dataset.repo; });
+        var atEnd = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 24;
+        if (atEnd && entries.length) cur = entries[entries.length - 1].dataset.repo;
+        if (clicked) cur = clicked;
+        links.forEach(function (a) { if (a.dataset.repo === cur) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
+        box.classList.toggle("scrolled", scroller.scrollTop > 40);
+        box.classList.toggle("at-end", atEnd);
+      }
+      function align() {
+        var target = document.getElementById("p-" + clicked);
+        if (target) scroller.scrollTop += target.getBoundingClientRect().top + parseFloat(getComputedStyle(target).paddingTop) - scroller.getBoundingClientRect().top - 26;
+      }
+      scroller.addEventListener("scroll", mark, { passive: true });
+      ["wheel", "touchstart", "keydown", "pointerdown"].forEach(function (t) { scroller.addEventListener(t, function () { clicked = ""; }, { passive: true }); });
+      window.addEventListener("resize", mark);
+      side.querySelector(".side-nav").addEventListener("click", function (e) {
+        var a = e.target.closest("a");
+        if (!a) return;
+        if (!document.getElementById("p-" + a.dataset.repo) || getComputedStyle(scroller).overflowY === "visible") return;
+        e.preventDefault();
+        clicked = a.dataset.repo;
+        align();
+        mark();
+      });
+      // Pictures loading above a clicked project push it down, so keep lining it up
+      scroller.addEventListener("load", function () { if (clicked) align(); mark(); }, true);
+      mark();
     }
 
     // &w=1 opens on a welcome card. On a tracked link (&k=) the card is the same, and its
@@ -365,7 +542,8 @@
       var guided = shown.filter(function (x) { return demos.indexOf(x.repo) >= 0; }).length;
       document.getElementById("count").textContent = shown.length ? shown.length + (shown.length === 1 ? " project" : " projects") +
         (guided ? " · " + guided + " with a guided demo that walks you through " + (guided === 1 ? "it" : "them") : "") : "";
-      grid.innerHTML = shown.length ? shown.map(card).join("") : '<li class="empty">Nothing to show here yet.</li>';
+      if (view === "side" && shown.length) { document.getElementById("count").textContent = ""; renderSide(shown); }
+      else grid.innerHTML = shown.length ? shown.map(card).join("") : '<li class="empty">Nothing to show here yet.</li>';
       // The welcome card's colour strip: one stripe per project, in its own accent
       if (gate) {
         document.getElementById("welcomeStrip").innerHTML = shown.map(function (x) {

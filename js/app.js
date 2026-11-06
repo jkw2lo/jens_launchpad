@@ -1140,7 +1140,7 @@
   // project with an overview, in launchpad order.
   var shareBody = document.getElementById("shareBody");
   document.getElementById("sharePanel").addEventListener("toggle", function () { if (this.open) loadVisits(); });
-  var SHARE_VIEWS = [["grid", "Grid"], ["feature", "Featured"], ["list", "List"]];
+  var SHARE_VIEWS = [["side", "Side list"], ["grid", "Grid"], ["feature", "Featured"], ["list", "List"]];
   var share = normalizeShare(load(KEY.share, null));
   function normalizeShare(v) {
     v = v && typeof v === "object" ? v : {};
@@ -1153,6 +1153,7 @@
     var title = fresh ? preset.title : v.title, intro = fresh ? preset.intro : v.intro;
     return {
       seeded: true,
+      highlights: Math.max(1, Math.min(+(fresh ? preset.highlights : v.highlights) || 3, 30)), // the side list's full entries
       repos: Array.isArray(v.repos) ? v.repos.filter(function (r) { return typeof r === "string"; }) : null,
       view: SHARE_VIEWS.some(function (x) { return x[0] === view; }) ? view : "grid",
       welcome: !!v.welcome, // open on the welcome screen, as tracked links do
@@ -1188,6 +1189,7 @@
     if (title) q += "&t=" + encodeURIComponent(title);
     if (intro) q += "&i=" + encodeURIComponent(intro);
     if (share.view !== "grid") q += "&v=" + share.view;
+    if (share.view === "side") q += "&h=" + share.highlights;
     if (share.welcome) q += "&w=1";
     var demos = pickedRepos().filter(function (r) { return share.demos.indexOf(r) >= 0; });
     if (demos.length) q += "&g=" + demos.map(encodeURIComponent).join(",");
@@ -1207,7 +1209,10 @@
         SHARE_VIEWS.map(function (v) {
           return '<button type="button" data-share-view="' + v[0] + '" aria-pressed="' + (share.view === v[0]) + '">' + v[1] + "</button>";
         }).join("") + "</div>" +
-        '<span class="share-hint">' + { grid: "Cards in rows", feature: "The first project gets a big card on top", list: "One project per row, picture beside the words" }[share.view] + "</span></div>" +
+        '<span class="share-hint">' + { side: "A list that stays put beside one scrolling container. No About pages", grid: "Cards in rows", feature: "The first project gets a big card on top", list: "One project per row, picture beside the words" }[share.view] + "</span></div>" +
+      (share.view === "side" ? '<div class="share-views"><span class="field-label">Highlights</span><div class="seg" role="group" aria-label="How many highlights">' +
+        [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-share-highlights="' + n + '" aria-pressed="' + (share.highlights === n) + '">' + n + "</button>"; }).join("") +
+        '</div><span class="share-hint">The first ones in your order get their full detail; the rest go under Also built</span></div>' : "") +
       '<div class="share-views"><span class="field-label">Opens on</span><div class="seg" role="group" aria-label="What the link opens on">' +
         '<button type="button" data-share-welcome="0" aria-pressed="' + !share.welcome + '">The projects</button>' +
         '<button type="button" data-share-welcome="1" aria-pressed="' + share.welcome + '">A welcome screen</button></div>' +
@@ -1340,7 +1345,7 @@
     var q = new URL(url, location.href).searchParams;
     return {
       p: (q.get("p") || "").split(",").filter(Boolean), t: q.get("t") || "", i: q.get("i") || "",
-      v: q.get("v") || "grid", w: q.get("w") === "1", n: q.get("n") || "",
+      v: q.get("v") || "grid", w: q.get("w") === "1", n: q.get("n") || "", h: q.get("h") || "",
       g: (q.get("g") || "").split(",").filter(Boolean)
     };
   }
@@ -1379,6 +1384,7 @@
   shareBody.addEventListener("click", function (e) {
     var t;
     if ((t = e.target.closest("[data-share-view]"))) { share.view = t.dataset.shareView; shareChanged('[data-share-view="' + share.view + '"]'); return; }
+    if ((t = e.target.closest("[data-share-highlights]"))) { share.highlights = +t.dataset.shareHighlights; shareChanged('[data-share-highlights="' + share.highlights + '"]'); return; }
     if ((t = e.target.closest("[data-share-welcome]"))) { share.welcome = t.dataset.shareWelcome === "1"; shareChanged('[data-share-welcome="' + t.dataset.shareWelcome + '"]'); return; }
     if ((t = e.target.closest("[data-share-move]"))) {
       var r = t.dataset.repo, dir = +t.dataset.shareMove;
