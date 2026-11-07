@@ -36,6 +36,30 @@ window.showContact = function (foot) {
   foot.hidden = false;
 };
 
+// The light / night switch on showcase.html and overview.html. Follows the device until
+// someone chooses; each page's <head> applies the choice before it first paints.
+window.themeButton = function (btn) {
+  if (!btn) return;
+  var root = document.documentElement;
+  var isDark = function () {
+    return root.dataset.theme ? root.dataset.theme === "dark" : !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+  };
+  var draw = function () {
+    var label = isDark() ? "Switch to light mode" : "Switch to night mode";
+    btn.setAttribute("aria-label", label);
+    btn.title = label;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + (isDark()
+      ? '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>'
+      : '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>') + "</svg>";
+  };
+  btn.addEventListener("click", function () {
+    root.dataset.theme = isDark() ? "light" : "dark";
+    try { localStorage.setItem("jens_launchpad:theme", root.dataset.theme); } catch (e) {}
+    draw();
+  });
+  draw();
+};
+
 // What plain showcase.html shows, and where Customize → Share starts until you change it.
 //   view        "side" is the fixed list beside one scrolling container
 //   highlights  with "side": how many of the projects, from the top, get their full detail
@@ -44,8 +68,8 @@ window.SHOWCASE = {
   title: "Jennifer Lo",
   intro: "A few apps I designed and built with Claude, each for something I needed myself.",
   view: "side",
-  highlights: 3,
-  projects: ["photobook_studio", "learn_japanese_nihongo_quest", "ui_field_guide", "awl-gusset", "trip_planner", "writers-blocks", "background_studio", "groundwork_habits_tasks", "recipe_book"],
+  highlights: 4,
+  projects: ["photobook_studio", "background_studio", "learn_japanese_nihongo_quest", "ui_field_guide", "awl-gusset", "trip_planner", "writers-blocks", "groundwork_habits_tasks", "recipe_book"],
   demos: ["photobook_studio"]
 };
 

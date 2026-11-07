@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script>try { var t = localStorage.getItem("jens_launchpad:theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}</script>
   <title>Jennifer Lo · Projects</title>
   <meta name="description" content="A few apps I designed and built with Claude, each for something I needed myself.">
   <meta property="og:type" content="website">
@@ -36,6 +37,8 @@
     :root {
       --bg: #f6f5f2;
       --card: #ffffff;
+      --band: #f4f3ef;
+      --name-mix: 84%;
       --ink: #15171b;
       --muted: #62666f;
       --line: rgba(21, 23, 27, 0.09);
@@ -45,9 +48,13 @@
       color-scheme: light;
     }
     @media (prefers-color-scheme: dark) {
-      :root {
+      :root:not([data-theme="light"]) {
         --bg: #111214;
         --card: #1a1c20;
+      --band: #23262b;
+      --name-mix: 62%;
+        --band: #23262b;
+        --name-mix: 62%;
         --ink: #eceef1;
         --muted: #a0a5ae;
         --line: rgba(236, 238, 241, 0.1);
@@ -55,6 +62,16 @@
         --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 22px 44px -16px rgba(0, 0, 0, 0.75);
         color-scheme: dark;
       }
+    }
+    :root[data-theme="dark"] {
+      --bg: #111214;
+      --card: #1a1c20;
+      --ink: #eceef1;
+      --muted: #a0a5ae;
+      --line: rgba(236, 238, 241, 0.1);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -14px rgba(0, 0, 0, 0.6);
+      --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 22px 44px -16px rgba(0, 0, 0, 0.75);
+      color-scheme: dark;
     }
     * { box-sizing: border-box; }
     /* hidden must win over the display set on .welcome and friends */
@@ -66,7 +83,12 @@
     .page { max-width: 1160px; margin: 0 auto; padding: 48px 24px 64px; }
     @media (max-width: 599px) { .page { padding: 28px 16px 40px; } }
 
-    header { margin-bottom: 32px; }
+    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px 32px; margin-bottom: 32px; }
+    .head-right { display: flex; align-items: center; gap: 18px; }
+    .theme-btn { display: inline-grid; place-items: center; flex: none; width: 34px; height: 34px; padding: 0; background: transparent; color: var(--muted); border: 1.5px solid var(--line); border-radius: 999px; cursor: pointer; }
+    .theme-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    @media (hover: hover) { .theme-btn:hover { color: var(--ink); border-color: currentColor; } }
+    .theme-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     h1 { margin: 0; font-size: clamp(2rem, 1.5rem + 2.2vw, 3rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; }
     .intro { margin: 12px 0 0; max-width: 60ch; color: var(--muted); font-size: 1.08rem; }
     .count { margin: 10px 0 0; color: var(--muted); font-size: 0.85rem; font-weight: 600; }
@@ -154,8 +176,8 @@
     @media (hover: hover) { .contact a:hover { color: var(--ink); border-color: currentColor; } }
     /* ---------- the side-list layout: a fixed list beside one scrolling container ---------- */
     .page.side-page { max-width: 1280px; }
-    .page.side-page header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px 32px; margin-bottom: 22px; }
-    .contact.top { margin: 8px 0 0; padding: 0; border: 0; }
+    .page.side-page header { margin-bottom: 22px; }
+    .contact.top { margin: 0; padding: 0; border: 0; }
     .contact.top span { display: none; }
     .side-wrap { display: grid; grid-template-columns: minmax(0, 1fr); }
     .side-nav { display: none; }
@@ -164,19 +186,20 @@
     .side-nav a { display: flex; align-items: center; gap: 7px; margin-left: -2px; padding: 7px 0 7px 14px; border-left: 2px solid transparent; color: var(--muted); font-weight: 600; text-decoration: none; }
     .side-nav .also a { padding-block: 4px; font-size: 0.88rem; font-weight: 500; }
     @media (hover: hover) { .side-nav a:hover { color: var(--ink); } }
-    .side-nav a[aria-current="true"] { color: color-mix(in srgb, var(--accent) 80%, var(--ink)); border-left-color: var(--accent); font-weight: 800; }
+    .side-nav a[aria-current="true"] { color: color-mix(in srgb, var(--accent) var(--name-mix), var(--ink)); border-left-color: var(--accent); font-weight: 800; }
     .side-nav a:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; border-radius: 6px; }
     .side-nav svg { flex: none; width: 11px; height: 11px; fill: currentColor; }
     .side-box { position: relative; min-width: 0; }
-    .side-scroll { background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); padding: 22px; }
+    .side-scroll { overflow: clip; background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); }
     .side-scroll:focus-visible { outline: 3px solid var(--line); outline-offset: 2px; }
     .side-cue { display: none; }
-    .proj + .proj, .also-head { margin-top: 36px; padding-top: 36px; border-top: 1px solid var(--line); }
+    .proj { padding: 24px 22px 30px; }
+    .proj.band { background: var(--band); }
     .proj-shot { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
     .proj-shot img { width: 100%; height: auto; }
     .proj-shot.phone { max-width: 280px; margin-inline: auto; }
     .proj-top { display: grid; gap: 18px 30px; align-items: center; }
-    .proj h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0; font-size: 1.75rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.2; }
+    .proj h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0; color: color-mix(in srgb, var(--accent) var(--name-mix), var(--ink)); font-size: 1.75rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.2; }
     .proj-pitch { margin: 6px 0 0; font-size: 1.05rem; }
     .proj-why { margin: 6px 0 0; color: var(--muted); font-size: 0.95rem; }
     .proj-why b { color: var(--ink); font-weight: 700; }
@@ -192,8 +215,8 @@
     .feat-plain .feat { display: block; margin: 0; }
     .proj-more { display: grid; gap: 18px; margin-top: 30px; }
     .proj-facts { margin: 24px 0 0; color: var(--muted); font-size: 0.85rem; }
-    .also-head { margin-bottom: 0; color: var(--muted); font-size: 1rem; font-weight: 800; }
-    .proj.small { display: grid; gap: 14px 24px; margin-top: 22px; padding-top: 0; border-top: 0; }
+    .also-head { margin: 0; padding: 26px 22px 14px; color: var(--muted); font-size: 1rem; font-weight: 800; }
+    .proj.small { display: grid; gap: 14px 24px; }
     .proj.small > .proj-head:only-child { grid-column: 1 / -1; }
     .proj.small h2 { font-size: 1.25rem; }
     .proj.small .proj-pitch { font-size: 0.95rem; }
@@ -215,7 +238,9 @@
       .side-wrap { flex: 1; min-height: 0; grid-template-columns: 210px minmax(0, 1fr); gap: 32px; }
       .side-nav { display: block; overflow-y: auto; padding-top: 4px; }
       .side-box { min-height: 0; }
-      .side-scroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 26px 30px 56px; scrollbar-width: thin; }
+      .side-scroll { height: 100%; overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; }
+      .proj { padding: 28px 30px 34px; }
+      .also-head { padding-inline: 30px; }
       .side-cue {
         position: absolute; left: 1px; right: 1px; bottom: 1px; display: flex; justify-content: center; align-items: flex-end;
         height: 76px; padding-bottom: 12px; border-radius: 0 0 22px 22px; pointer-events: none;
@@ -248,13 +273,14 @@
         <p class="intro" id="intro" hidden></p>
         <p class="count" id="count"></p>
       </div>
+      <div class="head-right" id="headRight"><button type="button" class="theme-btn" id="themeBtn"></button></div>
     </header>
     <ul class="grid" id="grid" aria-live="polite"></ul>
     <div class="side-wrap" id="side" hidden></div>
     <footer class="contact" id="contact" hidden></footer>
   </div>
 
-  <script src="js/projects.js?v=202611061900"></script>
+  <script src="js/projects.js?v=202611062043"></script>
   <script>
   (function () {
     "use strict";
@@ -264,6 +290,7 @@
 
     // Who made it and how to reach them: window.CONTACT in projects.js
     window.showContact(document.getElementById("contact"));
+    window.themeButton(document.getElementById("themeBtn"));
 
     // A short link (showcase.html?h0udkw) is just a code; its settings are saved in
     // showcase_links/{code}, which anyone with the code can read (and nobody can list).
@@ -434,7 +461,7 @@
       var buttons = '<div class="actions"><a class="btn primary" href="' + esc(open) + '">Open ' + ARROW + "</a>" +
         (OWNER ? '<a class="btn ghost" href="https://github.com/' + esc(OWNER) + "/" + esc(x.repo) + '">Source</a>' : "") + "</div>";
       var title = "<h2>" + esc(name) + (demo ? ' <span class="flag">' + PLAY + "Guided demo</span>" : "") + "</h2>";
-      var html = '<section class="proj' + (main ? "" : " small") + '" id="p-' + esc(x.repo) + '" data-repo="' + esc(x.repo) + '" style="--accent:' + accent + ";--on-accent:" + inkOn(accent) + '">';
+      var html = '<section class="proj' + (main ? "" : " small") + (i % 2 ? " band" : "") + '" id="p-' + esc(x.repo) + '" data-repo="' + esc(x.repo) + '" style="--accent:' + accent + ";--on-accent:" + inkOn(accent) + '">';
       if (!main) return html + picture(screens[0], x.repo) + '<div class="proj-head">' + title + left + why + buttons + "</div></section>";
       var features = (Array.isArray(d.features) ? d.features : []).slice(0, 4).filter(function (f) { return f && str(f.title); });
       var withPic = features.filter(function (f) { return f.screen; }), plain = features.filter(function (f) { return !f.screen; });
@@ -467,7 +494,8 @@
       side.hidden = false;
       var contact = document.getElementById("contact");
       contact.classList.add("top");
-      page.querySelector("header").appendChild(contact);
+      var right = document.getElementById("headRight");
+      right.insertBefore(contact, right.firstChild);
 
       // The list follows the scrolling; a clicked name stays lit until the visitor scrolls again
       var box = side.querySelector(".side-box"), scroller = side.querySelector(".side-scroll");
@@ -485,7 +513,7 @@
       }
       function align() {
         var target = document.getElementById("p-" + clicked);
-        if (target) scroller.scrollTop += target.getBoundingClientRect().top + parseFloat(getComputedStyle(target).paddingTop) - scroller.getBoundingClientRect().top - 26;
+        if (target) scroller.scrollTop += target.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
       }
       scroller.addEventListener("scroll", mark, { passive: true });
       ["wheel", "touchstart", "keydown", "pointerdown"].forEach(function (t) { scroller.addEventListener(t, function () { clicked = ""; }, { passive: true }); });

@@ -117,7 +117,7 @@ launchpad order).
 
 Plain `showcase.html` shows every project with an overview. To fix a default list instead, set
 `window.SHOWCASE = { title, intro, view, projects: ["repo", …], demos: ["repo", …] }` in `js/projects.js`
-(it is set now: three highlights and six more, Side list).
+(it is set now: four highlights and five more, Side list).
 
 **A different set for each company:** you don't need to edit any code. Under Customize → Share,
 add or remove projects, drag them into order, pick how many are highlights, turn on Demo where it
@@ -131,6 +131,9 @@ A link's preview image when pasted into email or LinkedIn is `icons/og-image.jpg
 tags are in the `<head>` of `showcase.html` and `overview.html`.
 
 An About page opened from a showcase leads back to that showcase, not to the launchpad.
+
+Showcases and About pages have a light / night switch at the top right. They follow the device
+until a visitor chooses, and the browser remembers the choice.
 
 ### Tracked links
 
