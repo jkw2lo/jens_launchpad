@@ -181,7 +181,8 @@
     .proj-why { margin: 6px 0 0; color: var(--muted); font-size: 0.95rem; }
     .proj-why b { color: var(--ink); font-weight: 700; }
     .proj .actions { margin-top: 0; padding-top: 14px; }
-    .proj .flag { position: static; box-shadow: none; }
+    .proj .flag { position: static; box-shadow: none; letter-spacing: 0; white-space: nowrap; }
+    .proj .flag svg { width: 12px; height: 12px; fill: currentColor; stroke: none; }
     .feat { display: grid; gap: 18px 32px; margin-top: 30px; align-items: center; }
     .feat h3 { margin: 0; font-size: 1.1rem; font-weight: 800; letter-spacing: -0.015em; }
     .feat p { margin: 4px 0 0; color: var(--muted); font-size: 0.95rem; }
@@ -193,6 +194,7 @@
     .proj-facts { margin: 24px 0 0; color: var(--muted); font-size: 0.85rem; }
     .also-head { margin-bottom: 0; color: var(--muted); font-size: 1rem; font-weight: 800; }
     .proj.small { display: grid; gap: 14px 24px; margin-top: 22px; padding-top: 0; border-top: 0; }
+    .proj.small > .proj-head:only-child { grid-column: 1 / -1; }
     .proj.small h2 { font-size: 1.25rem; }
     .proj.small .proj-pitch { font-size: 0.95rem; }
     .proj.small .proj-why { font-size: 0.88rem; }
@@ -252,7 +254,7 @@
     <footer class="contact" id="contact" hidden></footer>
   </div>
 
-  <script src="js/projects.js?v=202611061736"></script>
+  <script src="js/projects.js?v=202611061900"></script>
   <script>
   (function () {
     "use strict";

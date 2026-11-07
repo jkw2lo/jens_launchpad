@@ -45,8 +45,8 @@ window.SHOWCASE = {
   intro: "A few apps I designed and built with Claude, each for something I needed myself.",
   view: "side",
   highlights: 3,
-  projects: ["awl-gusset", "trip_planner", "writers-blocks", "groundwork_habits_tasks", "learn_cantonese_quest", "recipe_book", "yearly_calendar", "planner", "notebook_portfolio"],
-  demos: []
+  projects: ["photobook_studio", "learn_japanese_nihongo_quest", "ui_field_guide", "awl-gusset", "trip_planner", "writers-blocks", "background_studio", "groundwork_habits_tasks", "recipe_book"],
+  demos: ["photobook_studio"]
 };
 
 // The known projects. Listing a project here lets you give it a nicer name,
@@ -72,6 +72,7 @@ window.PROJECTS = [
   { id: "writers", repo: "writers-blocks", name: "Writers Blocks", blurb: "Shape long-form writing", icon: "blocks", cat: "making" },
   { id: "awl", repo: "awl-gusset", name: "Awl & Gusset", blurb: "Leather bag patterns", icon: "bag", cat: "making" },
   { id: "notebook", repo: "notebook_portfolio", name: "Notebook Portfolio", blurb: "A digital junk journal", icon: "book", cat: "making" },
+  { id: "gh:photobook_studio", repo: "photobook_studio", name: "Photobook Studio", blurb: "Photobooks, print-ready", icon: "book", cat: "making", demo: "?from=portfolio" },
   { id: "garage", repo: "jens_side_projects", name: "Jen's Side Projects", blurb: "The garage portfolio", icon: "garage", cat: "more" }
 ];
 

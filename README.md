@@ -119,6 +119,11 @@ Plain `showcase.html` shows every project with an overview. To fix a default lis
 `window.SHOWCASE = { title, intro, view, projects: ["repo", …], demos: ["repo", …] }` in `js/projects.js`
 (it is set now: three highlights and six more, Side list).
 
+**A different set for each company:** you don't need to edit any code. Under Customize → Share,
+add or remove projects, drag them into order, pick how many are highlights, turn on Demo where it
+applies, and make a tracked link. A link keeps what it had when you made it, so change the list for
+the next company without touching the last one.
+
 `window.CONTACT` in the same file puts your name and links (LinkedIn, email, GitHub) at the foot
 of every showcase and About page.
 
