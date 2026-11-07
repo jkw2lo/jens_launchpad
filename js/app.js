@@ -1212,7 +1212,7 @@
         '<span class="share-hint">' + { side: "A list that stays put beside one scrolling container. No About pages", grid: "Cards in rows", feature: "The first project gets a big card on top", list: "One project per row, picture beside the words" }[share.view] + "</span></div>" +
       (share.view === "side" ? '<div class="share-views"><span class="field-label">Highlights</span><div class="seg" role="group" aria-label="How many highlights">' +
         [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-share-highlights="' + n + '" aria-pressed="' + (share.highlights === n) + '">' + n + "</button>"; }).join("") +
-        '</div><span class="share-hint">The first ones in your order get their full detail; the rest go under Also built</span></div>' : "") +
+        '</div><span class="share-hint">The first ones in your order show their full detail; the rest go under Also built, behind a button</span></div>' : "") +
       '<div class="share-views"><span class="field-label">Opens on</span><div class="seg" role="group" aria-label="What the link opens on">' +
         '<button type="button" data-share-welcome="0" aria-pressed="' + !share.welcome + '">The projects</button>' +
         '<button type="button" data-share-welcome="1" aria-pressed="' + share.welcome + '">A welcome screen</button></div>' +

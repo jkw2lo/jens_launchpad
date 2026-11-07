@@ -199,9 +199,10 @@
     .proj-shot img { width: 100%; height: auto; }
     .proj-shot.phone { max-width: 280px; margin-inline: auto; }
     .proj-top { display: grid; gap: 18px 30px; align-items: center; }
+    .proj-title { margin-bottom: 18px; }
     .proj h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0; color: color-mix(in srgb, var(--accent) var(--name-mix), var(--ink)); font-size: 1.75rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.2; }
-    .proj-pitch { margin: 6px 0 0; font-size: 1.05rem; }
-    .proj-why { margin: 6px 0 0; color: var(--muted); font-size: 0.95rem; }
+    .proj-pitch { margin: 6px 0 0; max-width: 72ch; font-size: 1.05rem; }
+    .proj-why { margin: 0; color: var(--muted); font-size: 0.95rem; }
     .proj-why b { color: var(--ink); font-weight: 700; }
     .proj .actions { margin-top: 0; padding-top: 14px; }
     .proj .flag { position: static; box-shadow: none; letter-spacing: 0; white-space: nowrap; }
@@ -216,17 +217,19 @@
     .proj-more { display: grid; gap: 18px; margin-top: 30px; }
     .proj-facts { margin: 24px 0 0; color: var(--muted); font-size: 0.85rem; }
     .also-head { margin: 0; padding: 26px 22px 14px; color: var(--muted); font-size: 1rem; font-weight: 800; }
-    .proj.small { display: grid; gap: 14px 24px; }
-    .proj.small > .proj-head:only-child { grid-column: 1 / -1; }
     .proj.small h2 { font-size: 1.25rem; }
     .proj.small .proj-pitch { font-size: 0.95rem; }
     .proj.small .proj-why { font-size: 0.88rem; }
+    button.btn { background: none; color: inherit; cursor: pointer; }
+    .proj-details .feat:first-child, .proj-details .feat-plain:first-child { margin-top: 26px; }
+    .proj-hide { margin-top: 20px; }
     @media (min-width: 700px) {
       .proj-top { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+      .proj.small .proj-top { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+      .proj-top > div:only-child { grid-column: 1 / -1; }
       .feat.pic { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
       .feat-plain { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .proj-more.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .proj.small { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: center; }
     }
     /* Wide enough: the page stops scrolling, and only the container does */
     @media (min-width: 900px) and (min-height: 560px) {
@@ -280,7 +283,7 @@
     <footer class="contact" id="contact" hidden></footer>
   </div>
 
-  <script src="js/projects.js?v=202611062043"></script>
+  <script src="js/projects.js?v=202611070339"></script>
   <script>
   (function () {
     "use strict";
@@ -434,7 +437,7 @@
     function projectName(x) { return str((x.d || {}).name, 60) || (byRepo[x.repo] || {}).name || pretty(x.repo); }
 
     // The side-list layout (&v=side): the first &h= projects are highlights with their full
-    // detail; the rest get a short entry under "Also built". It replaces the About page's role.
+    // detail; the rest go under "Also built" with theirs behind a button. It replaces the About page's role.
     var highlights = Math.max(1, Math.min(+params.get("h") || +preset.highlights || 3, 30));
     function picture(s, repo) {
       var url = s && safeUrl(str(s.src, 300), new URL("../" + repo + "/overview/", location.href).href);
@@ -456,23 +459,27 @@
       var open = p.url || "https://" + OWNER + ".github.io/" + x.repo + "/";
       if (demo && p.demo) open = safeUrl(p.demo, open) || open;
       var problem = str(d.problem, 100) || (d.problem && str(d.problem.headline, 100)) || "";
-      var left = str(d.pitch) ? '<p class="proj-pitch">' + esc(str(d.pitch, 200)) + "</p>" : (p.blurb || x.desc ? '<p class="proj-pitch">' + esc(p.blurb || str(x.desc, 120)) + "</p>" : "");
+      var pitch = str(d.pitch, 200) || p.blurb || str(x.desc, 120);
       var why = problem ? '<p class="proj-why"><b>Why I built it:</b> ' + esc(problem) + "</p>" : "";
-      var buttons = '<div class="actions"><a class="btn primary" href="' + esc(open) + '">Open ' + ARROW + "</a>" +
-        (OWNER ? '<a class="btn ghost" href="https://github.com/' + esc(OWNER) + "/" + esc(x.repo) + '">Source</a>' : "") + "</div>";
-      var title = "<h2>" + esc(name) + (demo ? ' <span class="flag">' + PLAY + "Guided demo</span>" : "") + "</h2>";
-      var html = '<section class="proj' + (main ? "" : " small") + (i % 2 ? " band" : "") + '" id="p-' + esc(x.repo) + '" data-repo="' + esc(x.repo) + '" style="--accent:' + accent + ";--on-accent:" + inkOn(accent) + '">';
-      if (!main) return html + picture(screens[0], x.repo) + '<div class="proj-head">' + title + left + why + buttons + "</div></section>";
       var features = (Array.isArray(d.features) ? d.features : []).slice(0, 4).filter(function (f) { return f && str(f.title); });
       var withPic = features.filter(function (f) { return f.screen; }), plain = features.filter(function (f) { return !f.screen; });
       var f = d.facts || {};
       var facts = [f.worksOn, f.data, f.builtWith, str(f.started) ? "Since " + str(f.started) : ""].map(function (t) { return str(t, 40); }).filter(Boolean);
       var extra = screens.slice(1, 3).map(function (s) { return picture(s, x.repo); }).filter(Boolean);
-      return html + '<div class="proj-top">' + picture(screens[0], x.repo) + '<div class="proj-head">' + title + left + why + buttons + "</div></div>" +
-        withPic.map(function (t) { return feature(t, x.repo); }).join("") +
+      var detail = withPic.map(function (t) { return feature(t, x.repo); }).join("") +
         (plain.length ? '<div class="feat-plain">' + plain.map(function (t) { return feature(t, x.repo); }).join("") + "</div>" : "") +
         (extra.length ? '<div class="proj-more' + (extra.length > 1 ? " two" : "") + '">' + extra.join("") + "</div>" : "") +
-        (facts.length ? '<p class="proj-facts">' + esc(facts.join(" · ")) + "</p>" : "") + "</section>";
+        (facts.length ? '<p class="proj-facts">' + esc(facts.join(" · ")) + "</p>" : "");
+      var fold = !main && detail; // the rest keep their detail behind a button
+      var buttons = '<div class="actions"><a class="btn primary" href="' + esc(open) + '">Open ' + ARROW + "</a>" +
+        (OWNER ? '<a class="btn ghost" href="https://github.com/' + esc(OWNER) + "/" + esc(x.repo) + '">Source</a>' : "") +
+        (fold ? '<button type="button" class="btn ghost" data-details="' + esc(x.repo) + '" aria-expanded="false" aria-controls="d-' + esc(x.repo) + '">See details</button>' : "") + "</div>";
+      return '<section class="proj' + (main ? "" : " small") + (i % 2 ? " band" : "") + '" id="p-' + esc(x.repo) + '" data-repo="' + esc(x.repo) + '" style="--accent:' + accent + ";--on-accent:" + inkOn(accent) + '">' +
+        '<div class="proj-title"><h2>' + esc(name) + (demo ? ' <span class="flag">' + PLAY + "Guided demo</span>" : "") + "</h2>" +
+          (pitch ? '<p class="proj-pitch">' + esc(pitch) + "</p>" : "") + "</div>" +
+        '<div class="proj-top">' + picture(screens[0], x.repo) + "<div>" + why + buttons + "</div></div>" +
+        (fold ? '<div class="proj-details" id="d-' + esc(x.repo) + '" hidden>' + detail +
+          '<button type="button" class="btn ghost proj-hide" data-details="' + esc(x.repo) + '">Hide details</button></div>' : detail) + "</section>";
     }
     function renderSide(shown) {
       var side = document.getElementById("side"), page = document.getElementById("page");
@@ -518,6 +525,20 @@
       scroller.addEventListener("scroll", mark, { passive: true });
       ["wheel", "touchstart", "keydown", "pointerdown"].forEach(function (t) { scroller.addEventListener(t, function () { clicked = ""; }, { passive: true }); });
       window.addEventListener("resize", mark);
+      scroller.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-details]");
+        if (!b) return;
+        var panel = document.getElementById("d-" + b.dataset.details), entry = document.getElementById("p-" + b.dataset.details);
+        var top = entry.querySelector(".actions [data-details]"), open = panel.hidden;
+        panel.hidden = !open;
+        top.setAttribute("aria-expanded", String(open));
+        top.textContent = open ? "Hide details" : "See details";
+        // Closing from further down: come back to the project rather than land somewhere else
+        var limit = getComputedStyle(scroller).overflowY === "visible" ? 0 : scroller.getBoundingClientRect().top;
+        if (!open && entry.getBoundingClientRect().top < limit) entry.scrollIntoView({ block: "start" });
+        if (!open) top.focus({ preventScroll: true });
+        mark();
+      });
       side.querySelector(".side-nav").addEventListener("click", function (e) {
         var a = e.target.closest("a");
         if (!a) return;
